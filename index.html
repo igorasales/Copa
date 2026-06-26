@@ -1291,6 +1291,21 @@
       gap: 14px;
     }
 
+    @media (min-width: 1121px) {
+      .lineup-panel {
+        position: sticky;
+        top: 0;
+        align-self: start;
+        max-height: calc(100vh - 150px);
+        overflow: auto;
+        padding-right: 2px;
+      }
+
+      .roster-panel {
+        min-width: 0;
+      }
+    }
+
     .team-model-strip {
       display: grid;
       grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -1936,6 +1951,17 @@
     const SQUADS_API_URL = "https://en.wikipedia.org/w/api.php?action=parse&page=2026_FIFA_World_Cup_squads&prop=text&format=json&origin=*";
     const FIFA_MATCHES_URL = "https://api.fifa.com/api/v3/calendar/matches?idCompetition=17&idSeason=285023&count=500&language=en";
     const FIFA_SQUAD_URL = "https://api.fifa.com/api/v3/teams/{id}/squad?idCompetition=17&idSeason=285023&language=en";
+    const FIFA_GAMEDAY_TOKEN_URL = "https://cxm-api.fifa.com/fifaplusweb/api/external/gameDay/token";
+    const FIFA_GAMEDAY_STORIES_URL = "https://gameday-prod.fifa.mangodev.co.uk/1-0/stories";
+    const FIFA_STATS_FUNCTION_URL = "/.netlify/functions/fifa-stats";
+    const FIFA_PLAYER_STAT_CLASSES = [
+      "icp_fdcp_goals",
+      "icp_assists",
+      "icp_passes",
+      "icp_attempt_at_goal",
+      "icp_time_played",
+      "icp_total_distance"
+    ];
     const NEWS_RSS_URL = "https://news.google.com/rss/search?q=Copa%20do%20Mundo%202026%20futebol%20Brasil&hl=pt-BR&gl=BR&ceid=BR:pt-419";
     const NEWS_PROXY_URL = "https://api.allorigins.win/raw?url=";
     const NEWS_FUNCTION_URL = "/.netlify/functions/news";
@@ -2183,6 +2209,8 @@
       teamIndex: new Map(),
       squadCache: new Map(),
       playerCache: new Map(),
+      playerStatsCache: new Map(),
+      playerStatsPromise: null,
       bracketLayout: new Map(),
       news: [],
       newsLoading: false,
@@ -2491,6 +2519,16 @@
       });
     }
 
+    function uniqueValues(values) {
+      const seen = new Set();
+      return values.filter(value => {
+        const key = normalize(value);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
     function localizeName(value) {
       const name = cleanText(value);
       if (!name) return "A definir";
@@ -2564,6 +2602,124 @@
       if (!response.ok) throw new Error(`FIFA HTTP ${response.status}`);
       const json = await response.json();
       return Array.isArray(json?.Results) ? json.Results : [];
+    }
+
+    async function loadFifaPlayerStats() {
+      if (state.playerStatsCache.size) return state.playerStatsCache;
+      if (state.playerStatsPromise) return state.playerStatsPromise;
+      state.playerStatsPromise = (async () => {
+        const players = await fetchFifaPlayerStats();
+        cacheFifaPlayerStats(players);
+        return state.playerStatsCache;
+      })().catch(() => state.playerStatsCache);
+      return state.playerStatsPromise;
+    }
+
+    async function fetchFifaPlayerStats() {
+      const functionStats = await fetchFifaPlayerStatsFromFunction();
+      if (functionStats.length) return functionStats;
+      const tokenResponse = await fetchWithTimeout(FIFA_GAMEDAY_TOKEN_URL, {
+        headers: { accept: "application/json" }
+      }, 5000);
+      if (!tokenResponse.ok) throw new Error(`FIFA token HTTP ${tokenResponse.status}`);
+      const token = (await tokenResponse.json())?.token;
+      if (!token) throw new Error("FIFA token vazio");
+      const responses = await Promise.allSettled(FIFA_PLAYER_STAT_CLASSES.map(name => fetchFifaStatClass(name, token)));
+      return responses.flatMap(result => result.status === "fulfilled" ? result.value : []);
+    }
+
+    async function fetchFifaPlayerStatsFromFunction() {
+      try {
+        const response = await fetchWithTimeout(FIFA_STATS_FUNCTION_URL, {}, 6500);
+        if (!response.ok) return [];
+        const json = await response.json();
+        return Array.isArray(json?.players) ? json.players : [];
+      } catch {
+        return [];
+      }
+    }
+
+    async function fetchFifaStatClass(name, token) {
+      const query = `(and resourceStatus==\`urn:gd:resourceStatus:active\` _externalId~\`urn:gd:story:classification:${name}:competitionId:285023:(.*):rank_asc:page:1$\`)`;
+      const params = new URLSearchParams({
+        query,
+        skip: "0",
+        limit: "1",
+        sort: "tags.name==urn:gd:tag:story:fifa:column_number:asc"
+      });
+      const response = await fetchWithTimeout(`${FIFA_GAMEDAY_STORIES_URL}?${params}`, {
+        headers: {
+          accept: "application/json",
+          authorization: `Bearer ${token}`
+        }
+      }, 7000);
+      if (!response.ok) throw new Error(`FIFA stats HTTP ${response.status}`);
+      const json = await response.json();
+      return (json?.items || []).flatMap(item => item?.actors || []).map(parseFifaStatActor).filter(Boolean);
+    }
+
+    function parseFifaStatActor(actor) {
+      const tags = Array.isArray(actor?.tags) ? actor.tags : [];
+      const tag = suffix => tags.find(item => item.name?.endsWith(suffix))?.value;
+      const stats = {
+        id: actor?.key?._externalSportsPersonId || "",
+        name: actor?.name?.por || actor?.name?.eng || tag(":staff:display_name:por") || tag(":staff:display_name:eng") || "",
+        teamCode: tag(":team:abbreviation") || "",
+        teamName: tag(":team:name:por") || tag(":team:name:eng") || "",
+        image: tag(":staff:image") || ""
+      };
+      tags.forEach(item => {
+        const match = item.name?.match(/football:stats:([^:]+)$/);
+        if (match) stats[match[1]] = item.value;
+      });
+      return stats.id || stats.name ? stats : null;
+    }
+
+    function cacheFifaPlayerStats(players) {
+      (players || []).forEach(stats => {
+        const existing = findCachedFifaStats(stats.id, stats.name) || {};
+        const merged = mergeFifaStatObjects(existing, stats);
+        [stats.id, stats.name, normalize(stats.name)].filter(Boolean).forEach(key => {
+          state.playerStatsCache.set(String(key), merged);
+        });
+      });
+    }
+
+    function mergeFifaStatObjects(base, next) {
+      const merged = { ...(base || {}) };
+      Object.entries(next || {}).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") merged[key] = value;
+      });
+      return merged;
+    }
+
+    function findCachedFifaStats(id, name) {
+      return state.playerStatsCache.get(String(id || "")) || state.playerStatsCache.get(normalize(name || ""));
+    }
+
+    function mergeFifaStatsIntoPlayers(players) {
+      (players || []).forEach(player => {
+        const stats = fifaStatsForPlayer(player);
+        if (!stats) return;
+        player.FifaStats = mergeFifaStatObjects(player.FifaStats || {}, stats);
+        if (stats.image && !player.PictureUrl && !player.PlayerPicture?.PictureUrl) {
+          player.PictureUrl = `${stats.image}?&io=transform:crop,height:850,width:850&quality=75`;
+        }
+        if (stats.goals !== undefined) player.Goals = stats.goals;
+        if (stats.assists !== undefined) player.Assists = stats.assists;
+        if (stats.attempt_at_goal !== undefined) player.AttemptsAtGoal = stats.attempt_at_goal;
+        if (stats.passes !== undefined) player.Passes = stats.passes;
+        if (stats.time_played !== undefined) player.MinutesPlayed = stats.time_played;
+        if (stats.total_distance !== undefined) player.TotalDistance = stats.total_distance;
+      });
+    }
+
+    function fifaStatsForPlayer(player) {
+      return player?.FifaStats
+        || state.playerStatsCache.get(String(player?.IdPlayer || ""))
+        || state.playerStatsCache.get(normalize(playerFullName(player)))
+        || state.playerStatsCache.get(normalize(playerShortName(player)))
+        || null;
     }
 
     async function fetchSquadFacts() {
@@ -2808,17 +2964,21 @@
       const age = playerAge(player);
       const height = Number(player?.Height) || 180;
       const weight = Number(player?.Weight) || 76;
-      const goals = Number(player?.Goals) || 0;
+      const fifaStats = fifaStatsForPlayer(player) || {};
+      const goals = Number(fifaStats.goals ?? player?.Goals) || 0;
+      const assists = Number(fifaStats.assists ?? player?.Assists) || 0;
+      const passes = Number(fifaStats.passes ?? player?.Passes) || 0;
+      const distance = Number(fifaStats.total_distance ?? player?.TotalDistance) || 0;
       const yellows = Number(player?.YellowCards) || 0;
       const reds = Number(player?.RedCards) || 0;
-      const matches = Number(player?.MatchesPlayed) || 0;
+      const matches = Number(player?.MatchesPlayed) || (Number(fifaStats.time_played ?? player?.MinutesPlayed) ? 1 : 0);
       const fact = playerFact(player);
       const caps = Number(fact?.caps) || 0;
       const nationalGoals = Number(fact?.nationalGoals) || 0;
       const moral = playerMoral(player);
       const agePeak = age ? Math.max(0, 14 - Math.abs(age - 28)) : 7;
       const experience = Math.round(Math.max(48, Math.min(92, 55 + agePeak + Math.min(12, matches * 2) + Math.min(10, caps / 15))));
-      const physical = Math.round(Math.max(45, Math.min(94, 58 + ((height - 175) * .55) + ((weight - 72) * .18) + (agePeak * .9))));
+      const physical = Math.round(Math.max(45, Math.min(94, 58 + ((height - 175) * .55) + ((weight - 72) * .18) + (agePeak * .9) + Math.min(3, distance / 22000))));
       const discipline = Math.round(Math.max(38, Math.min(96, 82 - (yellows * 2.5) - (reds * 8))));
       const base = {
         gk: { attack: 34, defense: 82, creation: 54, goalkeeping: 84 },
@@ -2826,9 +2986,9 @@
         mid: { attack: 67, defense: 66, creation: 76, goalkeeping: 34 },
         fwd: { attack: 80, defense: 48, creation: 68, goalkeeping: 32 }
       }[role];
-      const attack = Math.round(Math.max(35, Math.min(96, base.attack + (goals * 2.8) + (nationalGoals * .18) + (agePeak * .55))));
+      const attack = Math.round(Math.max(35, Math.min(96, base.attack + (goals * 2.4) + (assists * 1.4) + (nationalGoals * .18) + (agePeak * .55))));
       const defense = Math.round(Math.max(35, Math.min(96, base.defense + (role === "gk" ? (height - 185) * .28 : (height - 180) * .18) + (discipline - 78) * .12)));
-      const creation = Math.round(Math.max(35, Math.min(96, base.creation + (experience - 65) * .22)));
+      const creation = Math.round(Math.max(35, Math.min(96, base.creation + (experience - 65) * .22 + (assists * 1.8) + Math.min(3, passes / 180))));
       const goalkeeping = Math.round(Math.max(25, Math.min(96, base.goalkeeping + (role === "gk" ? (height - 185) * .2 : 0))));
       const weights = {
         gk: { goalkeeping: .42, defense: .18, creation: .10, physical: .12, experience: .12, discipline: .06 },
@@ -3616,7 +3776,7 @@
               <a class="link-pill" href="https://ge.globo.com/futebol/copa-do-mundo/" target="_blank" rel="noreferrer">GE</a>
               <a class="link-pill" href="https://www.espn.com.br/futebol/" target="_blank" rel="noreferrer">ESPN</a>
               <a class="link-pill" href="https://www.uol.com.br/esporte/futebol/" target="_blank" rel="noreferrer">UOL</a>
-              <a class="youtube-pill" href="${escapeAttr(CAZE_TV_LIVE_URL)}" target="_blank" rel="noreferrer">CazeTV ao vivo</a>
+              <a class="youtube-pill" href="${escapeAttr(CAZE_TV_LIVE_URL)}" target="_blank" rel="noreferrer">Assistir</a>
             </div>
           </aside>
         </div>
@@ -3631,7 +3791,7 @@
           <span>${escapeHtml(label)}</span>
           <strong>${teamFlag(match.home)} ${escapeHtml(match.home.name)} x ${teamFlag(match.away)} ${escapeHtml(match.away.name)}</strong>
           <small>${escapeHtml(match.badge || match.score || match.status || match.stage)} - ${escapeHtml(match.dateDisplay || "A definir")}</small>
-          <span class="youtube-pill" data-youtube-url="${escapeAttr(cazeTvMatchUrl(match))}">Assistir CazeTV</span>
+          <span class="youtube-pill" data-youtube-url="${escapeAttr(cazeTvMatchUrl(match))}">Assistir</span>
         </article>
       `;
     }
@@ -3899,7 +4059,7 @@
           </div>
           <div class="match-footer">
             <span class="status ${match.statusClass}">${escapeHtml(match.badge || (match.isDone ? match.score : match.label))}</span>
-            <span class="watch-link" data-youtube-url="${escapeAttr(cazeTvMatchUrl(match))}">assistir</span>
+            <span class="watch-link" data-youtube-url="${escapeAttr(cazeTvMatchUrl(match))}">Assistir</span>
           </div>
         </button>
       `;
@@ -4094,7 +4254,7 @@
           </div>
           <div class="match-footer">
             <span class="status ${match.statusClass}">${escapeHtml(match.badge || (match.isDone ? match.score : match.label))}</span>
-            <span class="watch-link" data-youtube-url="${escapeAttr(cazeTvMatchUrl(match))}">assistir</span>
+            <span class="watch-link" data-youtube-url="${escapeAttr(cazeTvMatchUrl(match))}">Assistir</span>
           </div>
         </button>
       `;
@@ -4115,7 +4275,7 @@
           ${detailItem("Status", match.isLive ? `${match.status}: ${match.score}` : (match.isDone ? `Finalizado: ${match.score}` : match.label))}
           ${detailItem("Data e hora", match.dateDisplay || "A definir")}
           ${detailItem("Local", match.venue || "A definir")}
-          ${detailItem("Ao vivo", `<a href="${escapeAttr(cazeTvMatchUrl(match))}" target="_blank" rel="noreferrer">buscar transmissao na CazeTV</a>`)}
+          ${detailItem("Ao vivo", `<a href="${escapeAttr(cazeTvMatchUrl(match))}" target="_blank" rel="noreferrer">Assistir</a>`)}
           ${detailItem("Fonte", match.dataSource === "FIFA" ? `FIFA · ${formatCheckedAt(match.liveUpdatedAt)}` : (match.reportHref ? `<a href="${escapeAttr(match.reportHref)}" target="_blank" rel="noreferrer">ver página do jogo</a>` : "Wikipedia/FIFA"))}
           ${renderModelInsight(match)}
           ${renderScoreEditor(match)}
@@ -4305,19 +4465,57 @@
       const key = String(team?.idTeam || normalize(team?.name || ""));
       if (!key || state.badgeCache.has(key)) return;
       try {
-        const search = `${team?.sourceName || team?.name || ""} national football team crest logo`;
-        const url = `https://commons.wikimedia.org/w/api.php?action=query&origin=*&format=json&generator=search&gsrsearch=${encodeURIComponent(search)}&gsrlimit=8&prop=imageinfo&iiprop=url&iiurlwidth=180`;
-        const response = await fetch(url, { cache: "force-cache" });
-        if (!response.ok) throw new Error("badge fetch failed");
-        const pages = Object.values((await response.json())?.query?.pages || {});
-        const hit = pages
-          .map(page => ({ title: page.title || "", url: page.imageinfo?.[0]?.thumburl || page.imageinfo?.[0]?.url || "" }))
-          .find(item => item.url && !/flag|map|kit/i.test(item.title));
+        let hit = null;
+        for (const search of teamBadgeQueries(team)) {
+          const url = `https://commons.wikimedia.org/w/api.php?action=query&origin=*&format=json&generator=search&gsrsearch=${encodeURIComponent(search)}&gsrlimit=12&prop=imageinfo&iiprop=url&iiurlwidth=220`;
+          const response = await fetch(url, { cache: "force-cache" });
+          if (!response.ok) continue;
+          const pages = Object.values((await response.json())?.query?.pages || {});
+          hit = pickTeamBadgeHit(pages);
+          if (hit) break;
+        }
         if (!hit) return;
         state.badgeCache.set(key, hit.url);
         const selectorKey = window.CSS?.escape ? CSS.escape(key) : key.replace(/"/g, '\\"');
         document.querySelectorAll(`[data-team-badge="${selectorKey}"]`).forEach(img => { img.src = hit.url; });
       } catch {}
+    }
+
+    function teamBadgeQueries(team) {
+      const names = uniqueValues([
+        team?.sourceName,
+        team?.name,
+        TEAM_NAMES_PT[team?.sourceName || ""],
+        team?.idCountry
+      ].filter(Boolean));
+      return names.flatMap(name => [
+        `${name} national football team logo`,
+        `${name} football federation logo`,
+        `${name} football association crest`,
+        `${name} soccer federation logo`
+      ]).slice(0, 12);
+    }
+
+    function pickTeamBadgeHit(pages) {
+      return pages
+        .map(page => ({
+          title: page.title || "",
+          url: page.imageinfo?.[0]?.thumburl || page.imageinfo?.[0]?.url || ""
+        }))
+        .map(item => ({ ...item, score: teamBadgeScore(item) }))
+        .filter(item => item.url && item.score > 0)
+        .sort((a, b) => b.score - a.score)[0] || null;
+    }
+
+    function teamBadgeScore(item) {
+      const title = item.title.toLowerCase();
+      if (/flag|map|kit|jersey|shirt|uniform|location|banner|supporters/.test(title)) return 0;
+      let score = 1;
+      if (/logo|crest|badge|emblem/.test(title)) score += 5;
+      if (/football association|federation|national football team|soccer federation/.test(title)) score += 4;
+      if (/svg|png/.test(title)) score += 1;
+      if (/women|u-17|u-20|olympic|futsal|beach/.test(title)) score -= 3;
+      return score;
     }
 
     function confederationForTeam(team) {
@@ -4556,6 +4754,8 @@
           }
         } catch {}
       }
+      await loadFifaPlayerStats();
+      if (Array.isArray(squad?.Players)) mergeFifaStatsIntoPlayers(squad.Players);
       renderTeamModal(team, squad);
     }
 
@@ -4602,7 +4802,7 @@
           ${teamModelCell("Sinergia", model?.synergy ?? rating.squadSynergy ?? "-")}
         </div>
         <div class="team-modal-grid">
-          <div>
+          <div class="lineup-panel">
             <h3>Escalação e tática</h3>
             <div class="lineup-controls">
               <label class="formation-field">
@@ -4630,7 +4830,7 @@
             <p class="detail-label">Clique em uma vaga no campo, depois clique em Escalar no banco. Arrastar muda a função no campo e recalcula a projeção.</p>
             <button class="ghost-button" type="button" data-reset-lineup="${escapeAttr(teamId)}">Restaurar provavel</button>
           </div>
-          <div>
+          <div class="roster-panel">
             <h3>Elenco e dados</h3>
             <div class="bench-tools">
               <span class="data-badge real">Nome, foto, posição e elenco: FIFA quando disponível</span>
@@ -4751,15 +4951,17 @@
       const name = localizedDescription(player.ShortName) || localizedDescription(player.PlayerName);
       const position = localizedDescription(player.PositionLocalized) || "-";
       const height = player.Height ? `${Math.round(player.Height)} cm` : "-";
-      const goals = player.Goals ?? "-";
+      const fifaStats = fifaStatsForPlayer(player) || {};
+      const goals = fifaStats.goals ?? player.Goals ?? "-";
+      const assists = fifaStats.assists ?? player.Assists ?? "-";
       const yellows = player.YellowCards ?? "-";
       const reds = player.RedCards ?? "-";
       return `
         <div class="player-card">
           <strong>${escapeHtml(player.JerseyNum ? `${player.JerseyNum} · ${name}` : name)}</strong>
           <span>${escapeHtml(position)} · ${height}</span>
-          <span>Gols ${goals} · Amarelos ${yellows} · Vermelhos ${reds}</span>
-          <span>Minutos/distância: indisponível na resposta pública atual</span>
+          <span>Gols ${goals} · Assist. ${assists} · Amarelos ${yellows} · Vermelhos ${reds}</span>
+          <span>Minutos ${statValue(fifaStats.time_played ?? player.MinutesPlayed)} · Dist. ${formatDistance(fifaStats.total_distance ?? player.TotalDistance)}</span>
         </div>
       `;
     }
@@ -4770,7 +4972,11 @@
       const position = playerPosition(player);
       const height = player.Height ? `${Math.round(player.Height)} cm` : "-";
       const age = playerAge(player);
-      const goals = statValue(player.Goals);
+      const fifaStats = fifaStatsForPlayer(player) || {};
+      const goals = statValue(fifaStats.goals ?? player.Goals);
+      const assists = statValue(fifaStats.assists ?? player.Assists);
+      const minutes = statValue(fifaStats.time_played ?? player.MinutesPlayed);
+      const distance = formatDistance(fifaStats.total_distance ?? player.TotalDistance);
       const yellows = statValue(player.YellowCards);
       const reds = statValue(player.RedCards);
       const attrs = playerAttributes(player);
@@ -4789,7 +4995,8 @@
             <span>${escapeHtml(shortName !== name ? `${shortName} - ${position}` : position)} - ${escapeHtml(role)} - ${height}${age ? ` - ${age} anos` : ""}</span>
             <span>${escapeHtml(fact?.club ? `${fact.club}${fact.clubCountry ? ` (${fact.clubCountry})` : ""}` : "Clube: buscando dados")}</span>
             <span>GER ${attrs.overall} - MOR ${attrs.moral} - ATA ${attrs.attack} - DEF ${attrs.defense}</span>
-            <span>Copa: gols ${goals} - amarelos ${yellows} - vermelhos ${reds}${fact ? ` | Sel.: ${fact.caps} jogos, ${fact.nationalGoals} gols` : ""}</span>
+            <span>FIFA 2026: gols ${goals} - assis. ${assists} - min ${minutes} - dist ${distance}</span>
+            <span>Cartoes: amarelos ${yellows} - vermelhos ${reds}${fact ? ` | Sel.: ${fact.caps} jogos, ${fact.nationalGoals} gols` : ""}</span>
             ${selected ? `<span>Titular atual</span>` : `
               <label class="replace-control">Entrar no lugar de
                 <select data-replace-slot-for="${escapeAttr(player.IdPlayer || "")}">
@@ -4807,6 +5014,12 @@
       return value === null || value === undefined || value === "" ? "sem dado FIFA" : value;
     }
 
+    function formatDistance(value) {
+      const number = Number(value);
+      if (!Number.isFinite(number) || number <= 0) return "sem dado FIFA";
+      return number >= 1000 ? `${(number / 1000).toFixed(1).replace(".", ",")} km` : `${Math.round(number)} m`;
+    }
+
     function renderPlayerDetail(playerId) {
       const player = state.playerCache.get(String(playerId));
       const box = document.getElementById("playerDetail");
@@ -4818,6 +5031,7 @@
       const photo = playerPhoto(player);
       const age = playerAge(player);
       const fact = playerFact(player);
+      const fifaStats = fifaStatsForPlayer(player) || {};
       box.innerHTML = `
         <div class="player-detail">
           ${photo ? `<button class="player-photo-button" type="button" data-photo-url="${escapeAttr(photo)}" data-photo-name="${escapeAttr(name)}"><img class="player-photo" src="${escapeAttr(photo)}" alt="${escapeAttr(name)}" loading="lazy" /></button>` : `<span class="player-photo placeholder">${escapeHtml((shortName || name).slice(0, 1))}</span>`}
@@ -4825,7 +5039,7 @@
             <h3>${escapeHtml(name)}</h3>
             <p class="detail-label">${escapeHtml(shortName)} - ${escapeHtml(position)} - ${escapeHtml(player.teamName || "")}</p>
             <div class="data-source-row">
-              <span class="data-badge real">Elenco/foto: FIFA</span>
+              <span class="data-badge real">Elenco/foto/estatisticas: FIFA</span>
               <span class="data-badge real">Clube e seleção: Wikipedia quando cruzado</span>
               <span class="data-badge estimate">Atributos: estimativa</span>
             </div>
@@ -4842,7 +5056,8 @@
             </div>
             <p class="detail-label">Camisa ${escapeHtml(player.JerseyNum || "-")} - Idade ${escapeHtml(age || "-")} - Altura ${escapeHtml(player.Height ? `${Math.round(player.Height)} cm` : "-")} - Peso ${escapeHtml(player.Weight ? `${Math.round(player.Weight)} kg` : "-")}</p>
             <p class="detail-label">${escapeHtml(fact?.club ? `Clube: ${fact.club}${fact.clubCountry ? ` (${fact.clubCountry})` : ""}` : "Clube: ainda sem cruzamento no indice de elencos")} - Seleção: ${escapeHtml(fact ? `${fact.caps} jogos, ${fact.nationalGoals} gols` : "-")}</p>
-            <p class="detail-label">Copa 2026: gols ${escapeHtml(statValue(player.Goals))} - amarelos ${escapeHtml(statValue(player.YellowCards))} - vermelhos ${escapeHtml(statValue(player.RedCards))} - minutos e distancia dependem de endpoint estatistico nao exposto nesta resposta publica.</p>
+            <p class="detail-label">FIFA 2026: gols ${escapeHtml(statValue(fifaStats.goals ?? player.Goals))} - assistencias ${escapeHtml(statValue(fifaStats.assists ?? player.Assists))} - finalizacoes ${escapeHtml(statValue(fifaStats.attempt_at_goal ?? player.AttemptsAtGoal))} - passes ${escapeHtml(statValue(fifaStats.passes ?? player.Passes))} - minutos ${escapeHtml(statValue(fifaStats.time_played ?? player.MinutesPlayed))} - distancia ${escapeHtml(formatDistance(fifaStats.total_distance ?? player.TotalDistance))}.</p>
+            <p class="detail-label">Cartoes: amarelos ${escapeHtml(statValue(player.YellowCards))} - vermelhos ${escapeHtml(statValue(player.RedCards))}.</p>
             <p class="detail-label">${escapeHtml(playerContext(player, attrs, fact))}</p>
           </div>
         </div>
