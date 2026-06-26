@@ -213,10 +213,29 @@
       color: #fff;
       background:
         linear-gradient(180deg, rgba(16,32,51,.18), rgba(16,32,51,.86)),
-        url("https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1600&q=80") center/cover;
+        #1f2933;
+    }
+
+    .cover-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+    }
+
+    .cover-hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: linear-gradient(180deg, rgba(16,32,51,.08), rgba(16,32,51,.88));
     }
 
     .cover-hero-inner {
+      position: relative;
+      z-index: 2;
       padding: 28px;
       display: grid;
       gap: 18px;
@@ -357,10 +376,24 @@
       color: var(--red);
     }
 
-    .match-actions {
+    .match-footer {
       display: flex;
-      justify-content: flex-start;
-      margin-top: 6px;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      min-height: 24px;
+    }
+
+    .watch-link {
+      border: 0;
+      background: transparent;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 760;
+      padding: 2px 0;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      white-space: nowrap;
     }
 
     .summary {
@@ -1562,7 +1595,7 @@
     .photo-lightbox {
       position: fixed;
       inset: 0;
-      z-index: 40;
+      z-index: 160;
       display: grid;
       place-items: center;
       padding: 24px;
@@ -1790,7 +1823,8 @@
           </div>
         </div>
         <nav class="tabs" aria-label="Vistas">
-          <button class="tab" type="button" data-view-button="bracket" aria-selected="true">Mata-mata</button>
+          <button class="tab" type="button" data-view-button="home" aria-selected="true">Home</button>
+          <button class="tab" type="button" data-view-button="bracket" aria-selected="false">Mata-mata</button>
           <button class="tab" type="button" data-view-button="groups" aria-selected="false">Grupos</button>
           <button class="tab" type="button" data-view-button="matches" aria-selected="false">Jogos</button>
           <button class="tab" type="button" data-view-button="model" aria-selected="false">Estatística</button>
@@ -1799,10 +1833,12 @@
     </header>
 
     <main>
-      <section class="cover" id="cover"></section>
-      <section class="summary" id="summary"></section>
+      <section class="view active" id="view-home">
+        <section class="cover" id="cover"></section>
+        <section class="summary" id="summary"></section>
+      </section>
 
-      <section class="view active" id="view-bracket">
+      <section class="view" id="view-bracket">
         <div class="panel-head">
           <h2>Mata-mata</h2>
           <div class="filters">
@@ -1902,6 +1938,7 @@
     const FIFA_SQUAD_URL = "https://api.fifa.com/api/v3/teams/{id}/squad?idCompetition=17&idSeason=285023&language=en";
     const NEWS_RSS_URL = "https://news.google.com/rss/search?q=Copa%20do%20Mundo%202026%20futebol%20Brasil&hl=pt-BR&gl=BR&ceid=BR:pt-419";
     const NEWS_PROXY_URL = "https://api.allorigins.win/raw?url=";
+    const NEWS_FUNCTION_URL = "/.netlify/functions/news";
     const CAZE_TV_LIVE_URL = "https://www.youtube.com/@CazeTV/live";
     const CACHE_KEY = "worldcup2026-dashboard-v1";
     const SIM_CACHE_KEY = "worldcup2026-sim-v2";
@@ -2133,7 +2170,7 @@
       data: null,
       viewData: null,
       selectedMatchId: null,
-      activeView: "bracket",
+      activeView: "home",
       loading: false,
       mode: "live",
       zoom: 1,
@@ -2837,12 +2874,12 @@
       const rawOverall = blend("overall", Math.min(11, activeStarters.length || list.length));
       const rawMoral = blend("moral", Math.min(11, activeStarters.length || list.length));
       return {
-        overall: Math.max(40, Math.min(96, Math.round(rawOverall + (synergy * .35)))),
+        overall: Math.max(40, Math.min(96, Math.round(rawOverall + ((synergy - 55) * .08)))),
         attack: Math.max(40, Math.min(96, topAverage(byRole(activeStarters, "fwd").length ? byRole(activeStarters, "fwd") : activeStarters, "attack", 4) + tactical.attack)),
         midfield: topAverage(byRole(activeStarters, "mid").length ? byRole(activeStarters, "mid") : activeStarters, "creation", 5),
         defense: Math.max(40, Math.min(96, topAverage(byRole(activeStarters, "def").length ? byRole(activeStarters, "def") : activeStarters, "defense", 5) + tactical.defense)),
         goalkeeper: topAverage(byRole(activeStarters, "gk").length ? byRole(activeStarters, "gk") : activeStarters, "goalkeeping", 1),
-        moral: Math.max(35, Math.min(96, Math.round(rawMoral + (synergy * .55)))),
+        moral: Math.max(35, Math.min(96, Math.round(rawMoral + ((synergy - 50) * .12)))),
         synergy,
         tactical
       };
@@ -2853,15 +2890,25 @@
       if (!players.length) return 0;
       const clubs = new Map();
       let capsTotal = 0;
+      let experienceTotal = 0;
+      const roles = new Set();
       players.forEach(player => {
         const fact = playerFact(player);
         const club = normalize(fact?.club || "");
         if (club) clubs.set(club, (clubs.get(club) || 0) + 1);
         capsTotal += Number(fact?.caps) || 0;
+        const attrs = playerAttributes(player);
+        experienceTotal += Number(attrs.experience) || 55;
+        roles.add(attrs.role);
       });
-      const clubBonus = [...clubs.values()].reduce((sum, count) => sum + Math.max(0, count - 1) * .65, 0);
-      const capsBonus = Math.min(3.2, (capsTotal / Math.max(1, players.length)) / 32);
-      return Math.round(Math.max(0, Math.min(7, clubBonus + capsBonus)));
+      const sameClubPairs = [...clubs.values()].reduce((sum, count) => sum + Math.max(0, count - 1), 0);
+      const clubBonus = Math.min(16, sameClubPairs * 3.4);
+      const avgCaps = capsTotal / Math.max(1, players.length);
+      const capsBonus = Math.min(18, avgCaps * .34);
+      const experienceBonus = Math.max(-6, Math.min(14, ((experienceTotal / players.length) - 62) * .42));
+      const balanceBonus = Math.min(8, roles.size * 2);
+      const knownDataBonus = clubs.size ? 4 : 0;
+      return Math.round(Math.max(35, Math.min(92, 42 + clubBonus + capsBonus + experienceBonus + balanceBonus + knownDataBonus)));
     }
 
     function lineupImpact(players, teamId = "") {
@@ -3139,6 +3186,8 @@
           entry.squadSynergy = squad.synergy || 0;
           entry.tacticalAttack = squad.tactical?.attack || 0;
           entry.tacticalDefense = squad.tactical?.defense || 0;
+        } else {
+          entry.squadSynergy = estimatedTeamSynergy(entry);
         }
         const formMoral = Math.max(35, Math.min(92, performanceScore));
         const shirtWeight = Math.max(38, Math.min(96, ((entry.history || 56) * .72) + ((entry.externalPower || 56) * .28)));
@@ -3153,7 +3202,7 @@
           ((entry.squadScore || entry.externalPower) * MODEL_WEIGHTS.squad) +
           (performanceScore * MODEL_WEIGHTS.form) +
           (entry.moral * MODEL_WEIGHTS.moral) +
-          ((entry.squadSynergy || 0) * .28)
+          (((entry.squadSynergy || 50) - 50) * .08)
         )));
         entry.confidence = Math.round(Math.max(38, Math.min(94,
           42 +
@@ -3166,11 +3215,20 @@
           squad: Math.round(entry.squadScore || entry.externalPower),
           form: Math.round(performanceScore),
           moral: Math.round(entry.moral),
-          synergy: Math.round(entry.squadSynergy || 0),
+          synergy: Math.round(teamSynergyValue(entry)),
           history: Math.round(entry.history)
         };
       });
       return Object.fromEntries([...ratings.entries()].sort((a, b) => b[1].score - a[1].score));
+    }
+
+    function estimatedTeamSynergy(entry) {
+      const base = 48;
+      const history = Math.max(0, Math.min(14, ((entry.history || 56) - 50) * .35));
+      const power = Math.max(0, Math.min(10, ((entry.externalPower || 56) - 52) * .22));
+      const form = Math.max(-5, Math.min(8, ((entry.formScore || 50) - 50) * .12));
+      const matches = Math.min(6, (entry.played || 0) * 1.2);
+      return Math.round(Math.max(38, Math.min(82, base + history + power + form + matches)));
     }
 
     function applyScoreOverrides(data, ratings, allowModel) {
@@ -3536,6 +3594,7 @@
       els.cover.innerHTML = `
         <div class="cover-grid">
           <section class="cover-hero" aria-label="Capa da Copa">
+            <img class="cover-bg" src="https://images.pexels.com/photos/399187/pexels-photo-399187.jpeg?auto=compress&cs=tinysrgb&w=1600" alt="" loading="eager" referrerpolicy="no-referrer" />
             <div class="cover-hero-inner">
               <div>
                 <p class="cover-kicker">${escapeHtml(data.fifaCheckedAt ? `Atualizado FIFA ${formatCheckedAt(data.fifaCheckedAt)}` : "Painel Copa do Mundo 2026")}</p>
@@ -3578,7 +3637,6 @@
     }
 
     function renderNewsItems() {
-      if (state.newsLoading && !state.news.length) return `<div class="empty">Buscando noticias esportivas...</div>`;
       const items = state.news.length ? state.news : fallbackNewsItems();
       return items.slice(0, 7).map(item => `
         <a class="news-item" href="${escapeAttr(item.link)}" target="_blank" rel="noreferrer">
@@ -3591,15 +3649,7 @@
     async function loadNews() {
       state.newsLoading = true;
       try {
-        const response = await fetch(`${NEWS_PROXY_URL}${encodeURIComponent(NEWS_RSS_URL)}`, { cache: "no-store" });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const xml = new DOMParser().parseFromString(await response.text(), "application/xml");
-        const items = [...xml.querySelectorAll("item")].slice(0, 10).map(item => ({
-          title: cleanNewsTitle(item.querySelector("title")?.textContent || ""),
-          link: item.querySelector("link")?.textContent || "",
-          source: item.querySelector("source")?.textContent || "Google Noticias",
-          date: formatNewsDate(item.querySelector("pubDate")?.textContent || "")
-        })).filter(item => item.title && item.link);
+        const items = await fetchNewsItems();
         state.news = items.length ? items : fallbackNewsItems();
       } catch {
         state.news = fallbackNewsItems();
@@ -3608,6 +3658,64 @@
         state.newsLoaded = true;
         if (state.data) renderCover();
       }
+    }
+
+    async function fetchNewsItems() {
+      const rssUrl = encodeURIComponent(NEWS_RSS_URL);
+      const attempts = [
+        async () => {
+          const response = await fetchWithTimeout(NEWS_FUNCTION_URL, {}, 3500);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const json = await response.json();
+          return (json.items || []).filter(item => item.title && item.link);
+        },
+        async () => {
+          const response = await fetchWithTimeout(`${NEWS_PROXY_URL}${rssUrl}`, {}, 3500);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return parseNewsRss(await response.text());
+        },
+        async () => {
+          const response = await fetchWithTimeout(`https://api.allorigins.win/get?url=${rssUrl}`, {}, 3500);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const json = await response.json();
+          return parseNewsRss(json.contents || "");
+        },
+        async () => {
+          const response = await fetchWithTimeout(`https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`, {}, 3500);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const json = await response.json();
+          return (json.items || []).slice(0, 10).map(item => ({
+            title: cleanNewsTitle(item.title || ""),
+            link: item.link || "",
+            source: item.author || "Google Noticias",
+            date: formatNewsDate(item.pubDate || "")
+          })).filter(item => item.title && item.link);
+        }
+      ];
+      for (const attempt of attempts) {
+        try {
+          const items = await attempt();
+          if (items.length) return items;
+        } catch {}
+      }
+      return [];
+    }
+
+    function fetchWithTimeout(url, options = {}, timeoutMs = 3500) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      return fetch(url, { ...options, cache: "no-store", signal: controller.signal })
+        .finally(() => clearTimeout(timer));
+    }
+
+    function parseNewsRss(text) {
+      const xml = new DOMParser().parseFromString(text, "application/xml");
+      return [...xml.querySelectorAll("item")].slice(0, 10).map(item => ({
+        title: cleanNewsTitle(item.querySelector("title")?.textContent || ""),
+        link: item.querySelector("link")?.textContent || "",
+        source: item.querySelector("source")?.textContent || "Google Noticias",
+        date: formatNewsDate(item.querySelector("pubDate")?.textContent || "")
+      })).filter(item => item.title && item.link);
     }
 
     function cleanNewsTitle(title) {
@@ -3622,9 +3730,9 @@
 
     function fallbackNewsItems() {
       return [
-        { title: "Buscar noticias recentes sobre Copa 2026 no GE", link: "https://www.google.com/search?q=site%3Age.globo.com+Copa+do+Mundo+2026+futebol", source: "Busca GE", date: "fallback" },
-        { title: "Buscar noticias recentes sobre Copa 2026 na ESPN", link: "https://www.google.com/search?q=site%3Aespn.com.br+Copa+do+Mundo+2026+futebol", source: "Busca ESPN", date: "fallback" },
-        { title: "Buscar noticias recentes sobre Copa 2026 no UOL", link: "https://www.google.com/search?q=site%3Auol.com.br%2Fesporte+Copa+do+Mundo+2026+futebol", source: "Busca UOL", date: "fallback" }
+        { title: "Buscar noticias recentes sobre Copa 2026 no GE", link: "https://www.google.com/search?q=site%3Age.globo.com+Copa+do+Mundo+2026+futebol", source: state.newsLoading ? "Atualizando noticias" : "Busca GE", date: "" },
+        { title: "Buscar noticias recentes sobre Copa 2026 na ESPN", link: "https://www.google.com/search?q=site%3Aespn.com.br+Copa+do+Mundo+2026+futebol", source: state.newsLoading ? "Atualizando noticias" : "Busca ESPN", date: "" },
+        { title: "Buscar noticias recentes sobre Copa 2026 no UOL", link: "https://www.google.com/search?q=site%3Auol.com.br%2Fesporte+Copa+do+Mundo+2026+futebol", source: state.newsLoading ? "Atualizando noticias" : "Busca UOL", date: "" }
       ];
     }
 
@@ -3789,8 +3897,10 @@
               <span class="score">${scoreParts ? escapeHtml(scoreParts[2]) : ""}</span>
             </div>
           </div>
-          <span class="status ${match.statusClass}">${escapeHtml(match.badge || (match.isDone ? match.score : match.label))}</span>
-          <span class="match-actions"><span class="youtube-pill" data-youtube-url="${escapeAttr(cazeTvMatchUrl(match))}">CazeTV</span></span>
+          <div class="match-footer">
+            <span class="status ${match.statusClass}">${escapeHtml(match.badge || (match.isDone ? match.score : match.label))}</span>
+            <span class="watch-link" data-youtube-url="${escapeAttr(cazeTvMatchUrl(match))}">assistir</span>
+          </div>
         </button>
       `;
     }
@@ -3982,8 +4092,10 @@
               <span class="score">${scoreParts ? escapeHtml(scoreParts[2]) : ""}</span>
             </div>
           </div>
-          <span class="status ${match.statusClass}">${escapeHtml(match.badge || (match.isDone ? match.score : match.label))}</span>
-          <span class="match-actions"><span class="youtube-pill" data-youtube-url="${escapeAttr(cazeTvMatchUrl(match))}">CazeTV</span></span>
+          <div class="match-footer">
+            <span class="status ${match.statusClass}">${escapeHtml(match.badge || (match.isDone ? match.score : match.label))}</span>
+            <span class="watch-link" data-youtube-url="${escapeAttr(cazeTvMatchUrl(match))}">assistir</span>
+          </div>
         </button>
       `;
     }
@@ -4376,7 +4488,7 @@
                 <span>Defesa ${team.defense}</span>
                 <span>Conf. ${team.confidence || "-"}%</span>
                 <span>Moral ${team.moral || "-"}</span>
-                <span>Sinergia ${team.squadSynergy || 0}</span>
+                <span>Sinergia ${teamSynergyValue(team)} (${teamSynergyLabel(team)})</span>
                 ${renderTeamFactors(team)}
               </div>
             `).join("")}
@@ -4399,7 +4511,7 @@
         ["Elenco", components.squad || team.squadScore || 50],
         ["Forma", components.form || team.formScore || 50],
         ["Moral", components.moral || team.moral || 50],
-        ["Sinergia", components.synergy || team.squadSynergy || 0]
+        ["Sinergia", components.synergy || teamSynergyValue(team)]
       ];
       return `
         <div class="factor-list">
@@ -4412,6 +4524,20 @@
           `).join("")}
         </div>
       `;
+    }
+
+    function teamSynergyValue(team) {
+      const value = Number(team?.squadSynergy);
+      if (Number.isFinite(value) && value > 0) return Math.round(value);
+      return estimatedTeamSynergy(team || {});
+    }
+
+    function teamSynergyLabel(team) {
+      const value = teamSynergyValue(team);
+      if (value >= 72) return "alta";
+      if (value >= 58) return "boa";
+      if (value >= 46) return "media";
+      return "baixa";
     }
 
     async function openTeamModal(key) {
