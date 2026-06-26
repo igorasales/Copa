@@ -186,6 +186,183 @@
       padding: 18px;
     }
 
+    .cover {
+      margin-bottom: 16px;
+    }
+
+    .cover-grid {
+      min-height: 380px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 380px;
+      gap: 14px;
+    }
+
+    .cover-hero,
+    .cover-news {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .cover-hero {
+      position: relative;
+      min-height: 380px;
+      display: grid;
+      align-content: end;
+      color: #fff;
+      background:
+        linear-gradient(180deg, rgba(16,32,51,.18), rgba(16,32,51,.86)),
+        url("https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1600&q=80") center/cover;
+    }
+
+    .cover-hero-inner {
+      padding: 28px;
+      display: grid;
+      gap: 18px;
+    }
+
+    .cover-kicker {
+      margin: 0;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: rgba(255,255,255,.76);
+    }
+
+    .cover-title {
+      margin: 0;
+      max-width: 780px;
+      font-size: clamp(28px, 4vw, 54px);
+      line-height: .98;
+      letter-spacing: 0;
+    }
+
+    .cover-subtitle {
+      margin: 0;
+      max-width: 720px;
+      color: rgba(255,255,255,.82);
+      font-size: 15px;
+    }
+
+    .cover-match-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .cover-match {
+      border: 1px solid rgba(255,255,255,.22);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.12);
+      backdrop-filter: blur(8px);
+      padding: 12px;
+      display: grid;
+      gap: 7px;
+      min-height: 118px;
+    }
+
+    .cover-match span,
+    .cover-match small {
+      color: rgba(255,255,255,.78);
+    }
+
+    .cover-match strong {
+      font-size: 16px;
+      line-height: 1.18;
+    }
+
+    .cover-news {
+      background: var(--surface);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 380px;
+    }
+
+    .cover-news-head {
+      padding: 16px 16px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .cover-news-head h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .cover-news-head p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .news-list {
+      padding: 8px 14px 12px;
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      max-height: 288px;
+      overflow: auto;
+    }
+
+    .news-item {
+      display: grid;
+      gap: 3px;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--line);
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .news-item:last-child {
+      border-bottom: 0;
+    }
+
+    .news-item strong {
+      font-size: 13px;
+      line-height: 1.25;
+    }
+
+    .news-item span {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .news-actions {
+      padding: 10px 14px 14px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      border-top: 1px solid var(--line);
+    }
+
+    .link-pill,
+    .youtube-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      color: var(--ink);
+      text-decoration: none;
+      min-height: 28px;
+      padding: 5px 8px;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .youtube-pill {
+      border-color: rgba(184,52,52,.22);
+      background: var(--red-bg);
+      color: var(--red);
+    }
+
+    .match-actions {
+      display: flex;
+      justify-content: flex-start;
+      margin-top: 6px;
+    }
+
     .summary {
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1010,6 +1187,16 @@
       flex: 0 0 auto;
     }
 
+    .team-crest img,
+    .team-crest .flag {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      border: 0;
+      box-shadow: none;
+      background: transparent;
+    }
+
     .team-identities {
       display: flex;
       align-items: center;
@@ -1257,6 +1444,24 @@
       border-color: var(--blue);
     }
 
+    .replace-control {
+      display: grid;
+      gap: 4px;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .replace-control select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      min-height: 30px;
+      padding: 4px 6px;
+      color: var(--ink);
+    }
+
     .player-photo {
       width: 54px;
       height: 54px;
@@ -1274,6 +1479,11 @@
       padding: 0;
       width: 54px;
       height: 54px;
+    }
+
+    .player-photo-button:hover .player-photo {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(29, 95, 191, .12);
     }
 
     .player-photo.placeholder {
@@ -1349,7 +1559,55 @@
       font-size: 16px;
     }
 
+    .photo-lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(16,32,51,.72);
+    }
+
+    .photo-lightbox[hidden] {
+      display: none;
+    }
+
+    .photo-frame {
+      position: relative;
+      max-width: min(92vw, 520px);
+      width: 100%;
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 14px;
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 10px;
+    }
+
+    .photo-frame img {
+      width: 100%;
+      max-height: 72vh;
+      object-fit: contain;
+      object-position: center top;
+      background: var(--surface-2);
+      border-radius: var(--radius);
+    }
+
+    .photo-caption {
+      margin: 0;
+      font-weight: 760;
+    }
+
     @media (max-width: 1120px) {
+      .cover-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .cover-match-grid {
+        grid-template-columns: 1fr;
+      }
+
       .summary {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
@@ -1405,6 +1663,19 @@
 
       main {
         padding: 12px;
+      }
+
+      .cover-hero,
+      .cover-news {
+        min-height: 0;
+      }
+
+      .cover-hero-inner {
+        padding: 20px;
+      }
+
+      .cover-match-grid {
+        gap: 8px;
       }
 
       .top-inner {
@@ -1528,6 +1799,7 @@
     </header>
 
     <main>
+      <section class="cover" id="cover"></section>
       <section class="summary" id="summary"></section>
 
       <section class="view active" id="view-bracket">
@@ -1615,11 +1887,22 @@
     </section>
   </div>
 
+  <div class="photo-lightbox" id="photoLightbox" hidden>
+    <div class="photo-frame">
+      <button class="modal-close" id="photoLightboxClose" type="button" aria-label="Fechar">x</button>
+      <img id="photoLightboxImg" alt="" />
+      <p class="photo-caption" id="photoLightboxCaption"></p>
+    </div>
+  </div>
+
   <script>
     const API_URL = "https://en.wikipedia.org/w/api.php?action=parse&page=2026_FIFA_World_Cup&prop=text&format=json&origin=*";
     const SQUADS_API_URL = "https://en.wikipedia.org/w/api.php?action=parse&page=2026_FIFA_World_Cup_squads&prop=text&format=json&origin=*";
     const FIFA_MATCHES_URL = "https://api.fifa.com/api/v3/calendar/matches?idCompetition=17&idSeason=285023&count=500&language=en";
     const FIFA_SQUAD_URL = "https://api.fifa.com/api/v3/teams/{id}/squad?idCompetition=17&idSeason=285023&language=en";
+    const NEWS_RSS_URL = "https://news.google.com/rss/search?q=Copa%20do%20Mundo%202026%20futebol%20Brasil&hl=pt-BR&gl=BR&ceid=BR:pt-419";
+    const NEWS_PROXY_URL = "https://api.allorigins.win/raw?url=";
+    const CAZE_TV_LIVE_URL = "https://www.youtube.com/@CazeTV/live";
     const CACHE_KEY = "worldcup2026-dashboard-v1";
     const SIM_CACHE_KEY = "worldcup2026-sim-v2";
     const LINEUP_CACHE_KEY = "worldcup2026-lineup-v1";
@@ -1863,12 +2146,17 @@
       teamIndex: new Map(),
       squadCache: new Map(),
       playerCache: new Map(),
-      bracketLayout: new Map()
+      bracketLayout: new Map(),
+      news: [],
+      newsLoading: false,
+      newsLoaded: false,
+      badgeCache: new Map()
     };
 
     const els = {
       refreshButton: document.getElementById("refreshButton"),
       syncStatus: document.getElementById("syncStatus"),
+      cover: document.getElementById("cover"),
       summary: document.getElementById("summary"),
       bracketViewport: document.getElementById("bracketViewport"),
       bracketCanvas: document.getElementById("bracketCanvas"),
@@ -1892,9 +2180,14 @@
       modelResetButton: document.getElementById("modelResetButton"),
       teamModal: document.getElementById("teamModal"),
       teamModalBody: document.getElementById("teamModalBody"),
-      teamModalClose: document.getElementById("teamModalClose")
+      teamModalClose: document.getElementById("teamModalClose"),
+      photoLightbox: document.getElementById("photoLightbox"),
+      photoLightboxClose: document.getElementById("photoLightboxClose"),
+      photoLightboxImg: document.getElementById("photoLightboxImg"),
+      photoLightboxCaption: document.getElementById("photoLightboxCaption")
     };
     let lineupDrag = null;
+    let benchDrag = null;
 
     function loadSimScores() {
       try {
@@ -2540,15 +2833,35 @@
       const blend = (field, count) => Math.round((topAverage(activeStarters, field, count) * .80) + (topAverage(benchList.length ? benchList : list, field, Math.min(7, benchList.length || list.length)) * .20));
       const byRole = (items, role) => items.filter(item => item.attrs.role === role);
       const tactical = includeTactics ? tacticalModelAdjustments(players, idTeam) : { attack: 0, defense: 0, edited: 0 };
+      const synergy = squadSynergy(activeStarters.map(item => item.player));
+      const rawOverall = blend("overall", Math.min(11, activeStarters.length || list.length));
+      const rawMoral = blend("moral", Math.min(11, activeStarters.length || list.length));
       return {
-        overall: blend("overall", Math.min(11, activeStarters.length || list.length)),
+        overall: Math.max(40, Math.min(96, Math.round(rawOverall + (synergy * .35)))),
         attack: Math.max(40, Math.min(96, topAverage(byRole(activeStarters, "fwd").length ? byRole(activeStarters, "fwd") : activeStarters, "attack", 4) + tactical.attack)),
         midfield: topAverage(byRole(activeStarters, "mid").length ? byRole(activeStarters, "mid") : activeStarters, "creation", 5),
         defense: Math.max(40, Math.min(96, topAverage(byRole(activeStarters, "def").length ? byRole(activeStarters, "def") : activeStarters, "defense", 5) + tactical.defense)),
         goalkeeper: topAverage(byRole(activeStarters, "gk").length ? byRole(activeStarters, "gk") : activeStarters, "goalkeeping", 1),
-        moral: blend("moral", Math.min(11, activeStarters.length || list.length)),
+        moral: Math.max(35, Math.min(96, Math.round(rawMoral + (synergy * .55)))),
+        synergy,
         tactical
       };
+    }
+
+    function squadSynergy(starters) {
+      const players = (starters || []).filter(Boolean);
+      if (!players.length) return 0;
+      const clubs = new Map();
+      let capsTotal = 0;
+      players.forEach(player => {
+        const fact = playerFact(player);
+        const club = normalize(fact?.club || "");
+        if (club) clubs.set(club, (clubs.get(club) || 0) + 1);
+        capsTotal += Number(fact?.caps) || 0;
+      });
+      const clubBonus = [...clubs.values()].reduce((sum, count) => sum + Math.max(0, count - 1) * .65, 0);
+      const capsBonus = Math.min(3.2, (capsTotal / Math.max(1, players.length)) / 32);
+      return Math.round(Math.max(0, Math.min(7, clubBonus + capsBonus)));
     }
 
     function lineupImpact(players, teamId = "") {
@@ -2560,7 +2873,8 @@
         overall: current.overall - baseline.overall,
         attack: current.attack - baseline.attack,
         defense: current.defense - baseline.defense,
-        moral: current.moral - baseline.moral
+        moral: current.moral - baseline.moral,
+        synergy: current.synergy - baseline.synergy
       };
     }
 
@@ -2822,6 +3136,7 @@
           entry.squadAttack = squad.attack;
           entry.squadDefense = squad.defense;
           entry.squadMoral = squad.moral;
+          entry.squadSynergy = squad.synergy || 0;
           entry.tacticalAttack = squad.tactical?.attack || 0;
           entry.tacticalDefense = squad.tactical?.defense || 0;
         }
@@ -2837,7 +3152,8 @@
           (entry.externalPower * MODEL_WEIGHTS.externalPower) +
           ((entry.squadScore || entry.externalPower) * MODEL_WEIGHTS.squad) +
           (performanceScore * MODEL_WEIGHTS.form) +
-          (entry.moral * MODEL_WEIGHTS.moral)
+          (entry.moral * MODEL_WEIGHTS.moral) +
+          ((entry.squadSynergy || 0) * .28)
         )));
         entry.confidence = Math.round(Math.max(38, Math.min(94,
           42 +
@@ -2850,6 +3166,7 @@
           squad: Math.round(entry.squadScore || entry.externalPower),
           form: Math.round(performanceScore),
           moral: Math.round(entry.moral),
+          synergy: Math.round(entry.squadSynergy || 0),
           history: Math.round(entry.history)
         };
       });
@@ -2900,7 +3217,7 @@
 
     function getMainBracketRoundsFrom(data) {
       const order = ["Round_of_32", "Round_of_16", "Quarterfinals", "Semifinals", "Final"];
-      return order.map(id => data.knockout.find(round => round.id === id)).filter(Boolean);
+      return orderBracketRounds(order.map(id => data.knockout.find(round => round.id === id)).filter(Boolean));
     }
 
     function applyProjectedScore(match, home, away, label, className, extra = {}) {
@@ -3021,10 +3338,10 @@
       const aDist = poissonDistribution(aExpected, 5);
       const matrix = scoreMatrix(hDist, aDist);
       const probs = outcomeProbabilities(matrix);
-      const picked = pickScoreline(matrix, seededUnit(`${seed}:score`));
+      const knockout = /Rodada|Oitavas|Quartas|Semifinais|Final/i.test(match.stage || "");
+      const picked = representativeScoreline(matrix, h, a, probs, knockout);
       let homeGoals = picked.home;
       let awayGoals = picked.away;
-      const knockout = /Rodada|Oitavas|Quartas|Semifinais|Final/i.test(match.stage || "");
       let penaltyScore = "";
       let penaltyWinner = "";
       if (knockout && homeGoals === awayGoals) {
@@ -3118,6 +3435,23 @@
       return matrix[0] || { home: 1, away: 1 };
     }
 
+    function representativeScoreline(matrix, homeRating, awayRating, probs, knockout) {
+      const powerDiff = (homeRating.score || 50) - (awayRating.score || 50);
+      const ordered = matrix.slice(0, 12);
+      if (!ordered.length) return { home: 1, away: 1 };
+      let candidates = ordered;
+      if (Math.abs(powerDiff) >= 7) {
+        candidates = ordered.filter(item => powerDiff > 0 ? item.home > item.away : item.away > item.home);
+      } else if (!knockout && probs.draw >= .24) {
+        candidates = ordered.filter(item => item.home === item.away);
+      } else if (Math.abs(powerDiff) < 4) {
+        candidates = ordered.filter(item => Math.abs(item.home - item.away) <= 1);
+      }
+      const realistic = (candidates.length ? candidates : ordered)
+        .filter(item => item.home + item.away <= 4);
+      return realistic[0] || candidates[0] || ordered[0];
+    }
+
     function topScorelines(matrix, count) {
       return matrix.slice(0, count).map(item => ({
         score: `${item.home}-${item.away}`,
@@ -3146,7 +3480,7 @@
     function homeAdvantage(team, match) {
       const teamCountry = normalize(team?.idCountry || "");
       const stadiumCountry = normalize(match?.stadiumCountry || "");
-      if (teamCountry && stadiumCountry && teamCountry === stadiumCountry) return .014;
+      if (teamCountry && stadiumCountry && teamCountry === stadiumCountry) return .006;
       return 0;
     }
 
@@ -3172,6 +3506,7 @@
     function render() {
       if (!state.data) return;
       state.viewData = buildViewData();
+      renderCover();
       renderSummary();
       renderBracket();
       renderGroups();
@@ -3181,6 +3516,121 @@
       updateModeButtons();
       applyZoom();
       bindMatchCards();
+    }
+
+    function renderCover() {
+      const data = state.viewData || state.data;
+      const matches = (data.allMatches || []).slice().sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+      const now = Date.now();
+      const completed = matches.filter(match => match.isDone && !match.projected && match.timestamp && match.timestamp <= now).at(-1);
+      const live = matches.find(match => match.isLive);
+      const next = matches.find(match => !match.isDone && match.timestamp && match.timestamp >= now);
+      const upcoming = matches.filter(match => !match.isDone && match.timestamp && match.timestamp >= now).slice(0, 3);
+      const lead = live || next || completed || matches[0];
+      const coverMatches = [
+        { label: completed ? "Ultimo jogo" : "Ultimo resultado", match: completed },
+        { label: live ? "Ao vivo agora" : "Proximo jogo", match: live || next },
+        { label: "Proximos", match: upcoming[1] || upcoming[0] || next }
+      ].filter(item => item.match);
+
+      els.cover.innerHTML = `
+        <div class="cover-grid">
+          <section class="cover-hero" aria-label="Capa da Copa">
+            <div class="cover-hero-inner">
+              <div>
+                <p class="cover-kicker">${escapeHtml(data.fifaCheckedAt ? `Atualizado FIFA ${formatCheckedAt(data.fifaCheckedAt)}` : "Painel Copa do Mundo 2026")}</p>
+                <h2 class="cover-title">${escapeHtml(lead ? `${lead.home.name} x ${lead.away.name}` : "Copa do Mundo 2026")}</h2>
+                <p class="cover-subtitle">${escapeHtml(lead ? `${lead.stage} - ${lead.dateDisplay || "horario a definir"} - ${lead.venue || "local a definir"}` : "Chave, grupos, simulacao e noticias em uma unica tela.")}</p>
+              </div>
+              <div class="cover-match-grid">
+                ${coverMatches.map(item => coverMatchCard(item.label, item.match)).join("")}
+              </div>
+            </div>
+          </section>
+          <aside class="cover-news" aria-label="Ultimas noticias">
+            <div class="cover-news-head">
+              <h2>Ultimas noticias</h2>
+              <p>Busca automatica por Copa 2026, com fallback para portais esportivos.</p>
+            </div>
+            <div class="news-list">${renderNewsItems()}</div>
+            <div class="news-actions">
+              <a class="link-pill" href="https://ge.globo.com/futebol/copa-do-mundo/" target="_blank" rel="noreferrer">GE</a>
+              <a class="link-pill" href="https://www.espn.com.br/futebol/" target="_blank" rel="noreferrer">ESPN</a>
+              <a class="link-pill" href="https://www.uol.com.br/esporte/futebol/" target="_blank" rel="noreferrer">UOL</a>
+              <a class="youtube-pill" href="${escapeAttr(CAZE_TV_LIVE_URL)}" target="_blank" rel="noreferrer">CazeTV ao vivo</a>
+            </div>
+          </aside>
+        </div>
+      `;
+      if (!state.newsLoaded && !state.newsLoading) loadNews();
+    }
+
+    function coverMatchCard(label, match) {
+      if (!match) return "";
+      return `
+        <article class="cover-match">
+          <span>${escapeHtml(label)}</span>
+          <strong>${teamFlag(match.home)} ${escapeHtml(match.home.name)} x ${teamFlag(match.away)} ${escapeHtml(match.away.name)}</strong>
+          <small>${escapeHtml(match.badge || match.score || match.status || match.stage)} - ${escapeHtml(match.dateDisplay || "A definir")}</small>
+          <span class="youtube-pill" data-youtube-url="${escapeAttr(cazeTvMatchUrl(match))}">Assistir CazeTV</span>
+        </article>
+      `;
+    }
+
+    function renderNewsItems() {
+      if (state.newsLoading && !state.news.length) return `<div class="empty">Buscando noticias esportivas...</div>`;
+      const items = state.news.length ? state.news : fallbackNewsItems();
+      return items.slice(0, 7).map(item => `
+        <a class="news-item" href="${escapeAttr(item.link)}" target="_blank" rel="noreferrer">
+          <strong>${escapeHtml(item.title)}</strong>
+          <span>${escapeHtml([item.source, item.date].filter(Boolean).join(" - "))}</span>
+        </a>
+      `).join("");
+    }
+
+    async function loadNews() {
+      state.newsLoading = true;
+      try {
+        const response = await fetch(`${NEWS_PROXY_URL}${encodeURIComponent(NEWS_RSS_URL)}`, { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const xml = new DOMParser().parseFromString(await response.text(), "application/xml");
+        const items = [...xml.querySelectorAll("item")].slice(0, 10).map(item => ({
+          title: cleanNewsTitle(item.querySelector("title")?.textContent || ""),
+          link: item.querySelector("link")?.textContent || "",
+          source: item.querySelector("source")?.textContent || "Google Noticias",
+          date: formatNewsDate(item.querySelector("pubDate")?.textContent || "")
+        })).filter(item => item.title && item.link);
+        state.news = items.length ? items : fallbackNewsItems();
+      } catch {
+        state.news = fallbackNewsItems();
+      } finally {
+        state.newsLoading = false;
+        state.newsLoaded = true;
+        if (state.data) renderCover();
+      }
+    }
+
+    function cleanNewsTitle(title) {
+      return title.replace(/\s+-\s+[^-]+$/, "").trim();
+    }
+
+    function formatNewsDate(value) {
+      const date = new Date(value);
+      if (!Number.isFinite(date.getTime())) return "";
+      return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(date).replace(".", "");
+    }
+
+    function fallbackNewsItems() {
+      return [
+        { title: "Buscar noticias recentes sobre Copa 2026 no GE", link: "https://www.google.com/search?q=site%3Age.globo.com+Copa+do+Mundo+2026+futebol", source: "Busca GE", date: "fallback" },
+        { title: "Buscar noticias recentes sobre Copa 2026 na ESPN", link: "https://www.google.com/search?q=site%3Aespn.com.br+Copa+do+Mundo+2026+futebol", source: "Busca ESPN", date: "fallback" },
+        { title: "Buscar noticias recentes sobre Copa 2026 no UOL", link: "https://www.google.com/search?q=site%3Auol.com.br%2Fesporte+Copa+do+Mundo+2026+futebol", source: "Busca UOL", date: "fallback" }
+      ];
+    }
+
+    function cazeTvMatchUrl(match) {
+      const teams = match ? `${match.home?.name || ""} ${match.away?.name || ""}` : "";
+      return `https://www.youtube.com/results?search_query=${encodeURIComponent(`CazeTV ${teams} ao vivo`)}`;
     }
 
     function renderSummary() {
@@ -3236,9 +3686,30 @@
     function getMainBracketRounds() {
       const data = state.viewData || state.data;
       const order = ["Round_of_32", "Round_of_16", "Quarterfinals", "Semifinals", "Final"];
-      return order
+      return orderBracketRounds(order
         .map(id => data.knockout.find(round => round.id === id))
-        .filter(Boolean);
+        .filter(Boolean));
+    }
+
+    function orderBracketRounds(rounds) {
+      const ordered = rounds.map(round => ({ ...round, matches: [...(round.matches || [])] }));
+      for (let roundIndex = ordered.length - 1; roundIndex > 0; roundIndex -= 1) {
+        const current = ordered[roundIndex].matches;
+        const previous = ordered[roundIndex - 1].matches;
+        const byNumber = new Map(previous.map(match => [Number(match.matchNumber), match]).filter(([number]) => number));
+        const desired = [];
+        current.forEach(match => {
+          matchDependencies(match).forEach(dep => {
+            const source = byNumber.get(Number(dep.matchNumber));
+            if (source && !desired.includes(source)) desired.push(source);
+          });
+        });
+        previous.forEach(match => {
+          if (!desired.includes(match)) desired.push(match);
+        });
+        ordered[roundIndex - 1].matches = desired;
+      }
+      return ordered;
     }
 
     function getThirdPlaceRound() {
@@ -3319,6 +3790,7 @@
             </div>
           </div>
           <span class="status ${match.statusClass}">${escapeHtml(match.badge || (match.isDone ? match.score : match.label))}</span>
+          <span class="match-actions"><span class="youtube-pill" data-youtube-url="${escapeAttr(cazeTvMatchUrl(match))}">CazeTV</span></span>
         </button>
       `;
     }
@@ -3511,6 +3983,7 @@
             </div>
           </div>
           <span class="status ${match.statusClass}">${escapeHtml(match.badge || (match.isDone ? match.score : match.label))}</span>
+          <span class="match-actions"><span class="youtube-pill" data-youtube-url="${escapeAttr(cazeTvMatchUrl(match))}">CazeTV</span></span>
         </button>
       `;
     }
@@ -3530,6 +4003,7 @@
           ${detailItem("Status", match.isLive ? `${match.status}: ${match.score}` : (match.isDone ? `Finalizado: ${match.score}` : match.label))}
           ${detailItem("Data e hora", match.dateDisplay || "A definir")}
           ${detailItem("Local", match.venue || "A definir")}
+          ${detailItem("Ao vivo", `<a href="${escapeAttr(cazeTvMatchUrl(match))}" target="_blank" rel="noreferrer">buscar transmissao na CazeTV</a>`)}
           ${detailItem("Fonte", match.dataSource === "FIFA" ? `FIFA · ${formatCheckedAt(match.liveUpdatedAt)}` : (match.reportHref ? `<a href="${escapeAttr(match.reportHref)}" target="_blank" rel="noreferrer">ver página do jogo</a>` : "Wikipedia/FIFA"))}
           ${renderModelInsight(match)}
           ${renderScoreEditor(match)}
@@ -3704,6 +4178,36 @@
       return attrs ? `<span class="flag-click" ${attrs}>${flag}</span>` : flag;
     }
 
+    function teamCrest(team) {
+      const cached = state.badgeCache.get(String(team?.idTeam || normalize(team?.name || "")));
+      const fallback = team?.flag || "";
+      const src = cached || fallback;
+      return `
+        <div class="team-crest" ${teamAttrs(team)} title="Abrir selecao">
+          ${src ? `<img data-team-badge="${escapeAttr(team?.idTeam || normalize(team?.name || ""))}" src="${escapeAttr(src)}" alt="${escapeAttr(team?.name || "")}" loading="lazy" referrerpolicy="no-referrer" onerror="this.src='${escapeAttr(fallback)}'" />` : `<span class="flag" aria-hidden="true"></span>`}
+        </div>
+      `;
+    }
+
+    async function loadTeamBadge(team) {
+      const key = String(team?.idTeam || normalize(team?.name || ""));
+      if (!key || state.badgeCache.has(key)) return;
+      try {
+        const search = `${team?.sourceName || team?.name || ""} national football team crest logo`;
+        const url = `https://commons.wikimedia.org/w/api.php?action=query&origin=*&format=json&generator=search&gsrsearch=${encodeURIComponent(search)}&gsrlimit=8&prop=imageinfo&iiprop=url&iiurlwidth=180`;
+        const response = await fetch(url, { cache: "force-cache" });
+        if (!response.ok) throw new Error("badge fetch failed");
+        const pages = Object.values((await response.json())?.query?.pages || {});
+        const hit = pages
+          .map(page => ({ title: page.title || "", url: page.imageinfo?.[0]?.thumburl || page.imageinfo?.[0]?.url || "" }))
+          .find(item => item.url && !/flag|map|kit/i.test(item.title));
+        if (!hit) return;
+        state.badgeCache.set(key, hit.url);
+        const selectorKey = window.CSS?.escape ? CSS.escape(key) : key.replace(/"/g, '\\"');
+        document.querySelectorAll(`[data-team-badge="${selectorKey}"]`).forEach(img => { img.src = hit.url; });
+      } catch {}
+    }
+
     function confederationForTeam(team) {
       const code = (team?.idCountry || "").toUpperCase();
       return CONFEDERATION_BY_COUNTRY[code] || "";
@@ -3872,6 +4376,7 @@
                 <span>Defesa ${team.defense}</span>
                 <span>Conf. ${team.confidence || "-"}%</span>
                 <span>Moral ${team.moral || "-"}</span>
+                <span>Sinergia ${team.squadSynergy || 0}</span>
                 ${renderTeamFactors(team)}
               </div>
             `).join("")}
@@ -3893,7 +4398,8 @@
         ["Base", components.base || team.externalPower || 50],
         ["Elenco", components.squad || team.squadScore || 50],
         ["Forma", components.form || team.formScore || 50],
-        ["Moral", components.moral || team.moral || 50]
+        ["Moral", components.moral || team.moral || 50],
+        ["Sinergia", components.synergy || team.squadSynergy || 0]
       ];
       return `
         <div class="factor-list">
@@ -3935,6 +4441,8 @@
       const lineup = likelyLineup(players, teamId);
       const lineupIds = new Set(lineup.map(player => String(player.IdPlayer)));
       const model = squadModel(players, teamId);
+      const sortedPlayers = sortPlayersForLineup(players, lineupIds);
+      players.sort((a, b) => sortedPlayers.indexOf(a) - sortedPlayers.indexOf(b));
       const formation = formationForTeam(teamId);
       const impact = lineupImpact(players, teamId);
       const selectedSlot = state.selectedLineupSlot?.teamId === String(teamId) ? Number(state.selectedLineupSlot.slot) : null;
@@ -3945,7 +4453,7 @@
       els.teamModalBody.innerHTML = `
         <div class="team-modal-head">
           <div class="team-identities">
-            <div class="team-crest">${flagImg(team.flag, team.name)}</div>
+            ${teamCrest(team)}
             ${confedCrest(team)}
           </div>
           <div>
@@ -3965,6 +4473,7 @@
           ${teamModelCell("Defesa", model?.defense || rating.squadDefense || "-")}
           ${teamModelCell("Goleiro", model?.goalkeeper || "-")}
           ${teamModelCell("Moral", model?.moral || rating.moral || "-")}
+          ${teamModelCell("Sinergia", model?.synergy ?? rating.squadSynergy ?? "-")}
         </div>
         <div class="team-modal-grid">
           <div>
@@ -3984,6 +4493,7 @@
                 <span class="impact-pill">Ataque <strong>${impact.attack >= 0 ? "+" : ""}${impact.attack}</strong></span>
                 <span class="impact-pill">Defesa <strong>${impact.defense >= 0 ? "+" : ""}${impact.defense}</strong></span>
                 <span class="impact-pill">Moral <strong>${impact.moral >= 0 ? "+" : ""}${impact.moral}</strong></span>
+                <span class="impact-pill">Sinergia <strong>${impact.synergy >= 0 ? "+" : ""}${impact.synergy}</strong></span>
               ` : `<span class="impact-pill">Impacto disponivel quando o elenco carregar</span>`}
             </div>
             <div class="pitch-wrap">
@@ -4008,6 +4518,16 @@
           </div>
         </div>
       `;
+      loadTeamBadge(team);
+    }
+
+    function sortPlayersForLineup(players, lineupIds) {
+      return [...(players || [])].sort((a, b) => {
+        const aSelected = lineupIds.has(String(a.IdPlayer)) ? 0 : 1;
+        const bSelected = lineupIds.has(String(b.IdPlayer)) ? 0 : 1;
+        if (aSelected !== bSelected) return aSelected - bSelected;
+        return playerAttributes(b).overall - playerAttributes(a).overall;
+      });
     }
 
     function teamModelCell(label, value) {
@@ -4118,22 +4638,24 @@
       `;
     }
 
-    function playerCard(player, teamId = "", selected = false) {
+    function playerCard(player, teamId = "", selected = false, lineup = []) {
       const name = playerFullName(player);
       const shortName = playerShortName(player);
       const position = playerPosition(player);
       const height = player.Height ? `${Math.round(player.Height)} cm` : "-";
       const age = playerAge(player);
-      const goals = player.Goals ?? "-";
-      const yellows = player.YellowCards ?? "-";
-      const reds = player.RedCards ?? "-";
+      const goals = statValue(player.Goals);
+      const yellows = statValue(player.YellowCards);
+      const reds = statValue(player.RedCards);
       const attrs = playerAttributes(player);
       const photo = playerPhoto(player);
       const fact = playerFact(player);
       const role = roleLabel(attrs.role);
+      const modalPlayers = Array.isArray(state.currentModal?.squad?.Players) ? state.currentModal.squad.Players : [];
+      const currentLineup = lineup.length ? lineup : lineupForTeam(modalPlayers, teamId);
       return `
-        <article class="player-card${selected ? " selected" : ""}" data-player-id="${escapeAttr(player.IdPlayer || "")}">
-          <button class="player-photo-button" type="button" data-player-id="${escapeAttr(player.IdPlayer || "")}">
+        <article class="player-card${selected ? " selected" : ""}" data-player-id="${escapeAttr(player.IdPlayer || "")}" ${selected ? "" : `draggable="true" data-drag-sub-player="${escapeAttr(player.IdPlayer || "")}" data-drag-sub-team="${escapeAttr(teamId)}"`}>
+          <button class="player-photo-button" type="button" data-photo-url="${escapeAttr(photo)}" data-photo-name="${escapeAttr(name)}">
             ${photo ? `<img class="player-photo" src="${escapeAttr(photo)}" alt="${escapeAttr(name)}" loading="lazy" />` : `<span class="player-photo placeholder">${escapeHtml((shortName || name).slice(0, 1))}</span>`}
           </button>
           <span class="player-card-main">
@@ -4142,10 +4664,21 @@
             <span>${escapeHtml(fact?.club ? `${fact.club}${fact.clubCountry ? ` (${fact.clubCountry})` : ""}` : "Clube: buscando dados")}</span>
             <span>GER ${attrs.overall} - MOR ${attrs.moral} - ATA ${attrs.attack} - DEF ${attrs.defense}</span>
             <span>Copa: gols ${goals} - amarelos ${yellows} - vermelhos ${reds}${fact ? ` | Sel.: ${fact.caps} jogos, ${fact.nationalGoals} gols` : ""}</span>
-            ${selected ? `<span>Titular atual</span>` : `<button class="sub-button" type="button" data-sub-player="${escapeAttr(player.IdPlayer || "")}" data-sub-team="${escapeAttr(teamId)}">Escalar</button>`}
+            ${selected ? `<span>Titular atual</span>` : `
+              <label class="replace-control">Entrar no lugar de
+                <select data-replace-slot-for="${escapeAttr(player.IdPlayer || "")}">
+                  ${currentLineup.map((starter, index) => `<option value="${index}">${escapeHtml(`${index + 1}. ${playerShortName(starter)} - ${roleLabel(positionRole(starter))}`)}</option>`).join("")}
+                </select>
+              </label>
+              <button class="sub-button" type="button" data-sub-player="${escapeAttr(player.IdPlayer || "")}" data-sub-team="${escapeAttr(teamId)}">Substituir</button>
+            `}
           </span>
         </article>
       `;
+    }
+
+    function statValue(value) {
+      return value === null || value === undefined || value === "" ? "sem dado FIFA" : value;
     }
 
     function renderPlayerDetail(playerId) {
@@ -4161,7 +4694,7 @@
       const fact = playerFact(player);
       box.innerHTML = `
         <div class="player-detail">
-          ${photo ? `<img class="player-photo" src="${escapeAttr(photo)}" alt="${escapeAttr(name)}" loading="lazy" />` : `<span class="player-photo placeholder">${escapeHtml((shortName || name).slice(0, 1))}</span>`}
+          ${photo ? `<button class="player-photo-button" type="button" data-photo-url="${escapeAttr(photo)}" data-photo-name="${escapeAttr(name)}"><img class="player-photo" src="${escapeAttr(photo)}" alt="${escapeAttr(name)}" loading="lazy" /></button>` : `<span class="player-photo placeholder">${escapeHtml((shortName || name).slice(0, 1))}</span>`}
           <div>
             <h3>${escapeHtml(name)}</h3>
             <p class="detail-label">${escapeHtml(shortName)} - ${escapeHtml(position)} - ${escapeHtml(player.teamName || "")}</p>
@@ -4183,7 +4716,7 @@
             </div>
             <p class="detail-label">Camisa ${escapeHtml(player.JerseyNum || "-")} - Idade ${escapeHtml(age || "-")} - Altura ${escapeHtml(player.Height ? `${Math.round(player.Height)} cm` : "-")} - Peso ${escapeHtml(player.Weight ? `${Math.round(player.Weight)} kg` : "-")}</p>
             <p class="detail-label">${escapeHtml(fact?.club ? `Clube: ${fact.club}${fact.clubCountry ? ` (${fact.clubCountry})` : ""}` : "Clube: ainda sem cruzamento no indice de elencos")} - Seleção: ${escapeHtml(fact ? `${fact.caps} jogos, ${fact.nationalGoals} gols` : "-")}</p>
-            <p class="detail-label">Copa 2026: gols ${escapeHtml(player.Goals ?? "-")} - amarelos ${escapeHtml(player.YellowCards ?? "-")} - vermelhos ${escapeHtml(player.RedCards ?? "-")} - minutos e distancia dependem de endpoint estatistico nao exposto nesta resposta publica.</p>
+            <p class="detail-label">Copa 2026: gols ${escapeHtml(statValue(player.Goals))} - amarelos ${escapeHtml(statValue(player.YellowCards))} - vermelhos ${escapeHtml(statValue(player.RedCards))} - minutos e distancia dependem de endpoint estatistico nao exposto nesta resposta publica.</p>
             <p class="detail-label">${escapeHtml(playerContext(player, attrs, fact))}</p>
           </div>
         </div>
@@ -4217,13 +4750,35 @@
     window.state = state;
 
     document.addEventListener("click", event => {
+      const youtubeTarget = event.target.closest("[data-youtube-url]");
+      if (youtubeTarget) {
+        event.preventDefault();
+        event.stopPropagation();
+        window.open(youtubeTarget.getAttribute("data-youtube-url"), "_blank", "noopener");
+        return;
+      }
+      const photoTarget = event.target.closest("[data-photo-url]");
+      if (photoTarget) {
+        const url = photoTarget.getAttribute("data-photo-url");
+        if (url) {
+          event.preventDefault();
+          event.stopPropagation();
+          openPhotoLightbox(url, photoTarget.getAttribute("data-photo-name") || "Jogador");
+          return;
+        }
+      }
       const subButton = event.target.closest("[data-sub-player]");
       if (subButton) {
         event.preventDefault();
         event.stopPropagation();
         const teamId = subButton.getAttribute("data-sub-team");
-        const slot = state.selectedLineupSlot?.teamId === String(teamId) ? state.selectedLineupSlot.slot : null;
-        replaceLineupPlayer(teamId, subButton.getAttribute("data-sub-player"), slot);
+        const playerId = subButton.getAttribute("data-sub-player");
+        const slotSelect = document.querySelector(`[data-replace-slot-for="${playerId}"]`);
+        const selectedSlot = slotSelect ? Number(slotSelect.value) : null;
+        const slot = Number.isInteger(selectedSlot)
+          ? selectedSlot
+          : (state.selectedLineupSlot?.teamId === String(teamId) ? state.selectedLineupSlot.slot : null);
+        replaceLineupPlayer(teamId, playerId, slot);
         return;
       }
       const resetLineup = event.target.closest("[data-reset-lineup]");
@@ -4274,6 +4829,49 @@
         saveSimScores();
         render();
       }
+    });
+
+    function openPhotoLightbox(url, name) {
+      els.photoLightboxImg.src = url;
+      els.photoLightboxImg.alt = name || "";
+      els.photoLightboxCaption.textContent = name || "";
+      els.photoLightbox.hidden = false;
+    }
+
+    function closePhotoLightbox() {
+      els.photoLightbox.hidden = true;
+      els.photoLightboxImg.src = "";
+    }
+
+    document.addEventListener("dragstart", event => {
+      const card = event.target.closest("[data-drag-sub-player]");
+      if (!card) return;
+      benchDrag = {
+        teamId: card.getAttribute("data-drag-sub-team"),
+        playerId: card.getAttribute("data-drag-sub-player")
+      };
+      event.dataTransfer?.setData("text/plain", benchDrag.playerId);
+      event.dataTransfer?.setDragImage?.(card, 20, 20);
+    });
+
+    document.addEventListener("dragover", event => {
+      if (!benchDrag || !event.target.closest("[data-lineup-player]")) return;
+      event.preventDefault();
+    });
+
+    document.addEventListener("drop", event => {
+      const dot = event.target.closest("[data-lineup-player]");
+      if (!benchDrag || !dot) return;
+      event.preventDefault();
+      const pitch = dot.closest("[data-lineup-team]");
+      const teamId = pitch?.getAttribute("data-lineup-team") || benchDrag.teamId;
+      const slot = Number(dot.getAttribute("data-lineup-slot")) || 0;
+      replaceLineupPlayer(teamId, benchDrag.playerId, slot);
+      benchDrag = null;
+    });
+
+    document.addEventListener("dragend", () => {
+      benchDrag = null;
     });
 
     document.addEventListener("pointerdown", event => {
@@ -4352,6 +4950,10 @@
     els.teamModalClose.addEventListener("click", () => { els.teamModal.hidden = true; });
     els.teamModal.addEventListener("click", event => {
       if (event.target === els.teamModal) els.teamModal.hidden = true;
+    });
+    els.photoLightboxClose.addEventListener("click", closePhotoLightbox);
+    els.photoLightbox.addEventListener("click", event => {
+      if (event.target === els.photoLightbox) closePhotoLightbox();
     });
     els.groupFilter.addEventListener("change", renderGroups);
     els.matchFilter.addEventListener("change", renderMatches);
