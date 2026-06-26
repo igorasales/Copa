@@ -1,0 +1,10 @@
+{
+  "name": "copa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Site estatico da chave interativa da Copa do Mundo 2026.",
+  "scripts": {
+    "build": "node scripts/validate-build.js"
+  },
+  "devDependencies": {}
+}
