@@ -241,6 +241,34 @@
       gap: 18px;
     }
 
+    .cover-hero-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .official-logo-lockup {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 10px;
+      border: 1px solid rgba(255,255,255,.24);
+      background: rgba(255,255,255,.12);
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+      color: #fff;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .official-logo-lockup img {
+      width: 44px;
+      height: 30px;
+      object-fit: contain;
+    }
+
     .cover-kicker {
       margin: 0;
       font-size: 12px;
@@ -289,6 +317,168 @@
     .cover-match strong {
       font-size: 16px;
       line-height: 1.18;
+    }
+
+    .live-spotlight {
+      display: grid;
+      gap: 12px;
+      max-width: 760px;
+    }
+
+    .spotlight-teams {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      align-items: center;
+      gap: 12px;
+      max-width: 680px;
+    }
+
+    .spotlight-team {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .spotlight-team:last-child {
+      text-align: right;
+      justify-items: end;
+    }
+
+    .spotlight-team .flag {
+      width: 48px;
+      height: 32px;
+      border-radius: 5px;
+    }
+
+    .spotlight-team strong {
+      font-size: clamp(24px, 4vw, 48px);
+      line-height: .96;
+    }
+
+    .spotlight-score {
+      min-width: 76px;
+      text-align: center;
+      font-size: clamp(28px, 5vw, 58px);
+      font-weight: 900;
+      line-height: .92;
+      color: #fff;
+    }
+
+    .spotlight-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .story-rail {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(138px, 1fr);
+      gap: 9px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .story-card {
+      border: 1px solid rgba(255,255,255,.22);
+      background: rgba(2,12,24,.34);
+      color: #fff;
+      border-radius: 8px;
+      min-height: 84px;
+      padding: 10px;
+      display: grid;
+      align-content: space-between;
+      text-decoration: none;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+    }
+
+    .story-card span {
+      color: rgba(255,255,255,.72);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .story-card strong {
+      font-size: 14px;
+      line-height: 1.12;
+    }
+
+    .leaderboard-strip {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .leaderboard-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+    }
+
+    .leaderboard-head h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .leaderboard-head span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .leader-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .leader-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfdff;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .leader-avatar {
+      width: 46px;
+      height: 46px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #dfe7ee;
+    }
+
+    .leader-meta {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .leader-meta span {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .leader-meta strong {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .leader-value {
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--blue);
     }
 
     .cover-news {
@@ -845,6 +1035,39 @@
 
     .rating-row .factor-list {
       grid-column: 1 / -1;
+    }
+
+    .model-insights {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .insight-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfdff;
+      padding: 10px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .insight-card span {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .insight-card strong {
+      font-size: 14px;
+      line-height: 1.15;
+    }
+
+    .insight-card small {
+      color: var(--muted);
+      line-height: 1.25;
     }
 
     .projection-list {
@@ -1656,6 +1879,10 @@
         grid-template-columns: 1fr;
       }
 
+      .leader-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
       .summary {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
@@ -1683,6 +1910,7 @@
 
       .model-grid,
       .team-modal-grid,
+      .model-insights,
       .projection-list {
         grid-template-columns: 1fr;
       }
@@ -1722,8 +1950,36 @@
         padding: 20px;
       }
 
+      .cover-hero-top,
+      .leaderboard-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
       .cover-match-grid {
         gap: 8px;
+      }
+
+      .spotlight-teams {
+        grid-template-columns: 1fr;
+      }
+
+      .spotlight-team:last-child {
+        text-align: left;
+        justify-items: start;
+      }
+
+      .spotlight-score {
+        min-width: 0;
+        text-align: left;
+      }
+
+      .story-rail {
+        grid-auto-columns: minmax(132px, 72%);
+      }
+
+      .leader-grid {
+        grid-template-columns: 1fr;
       }
 
       .top-inner {
@@ -1954,6 +2210,9 @@
     const FIFA_GAMEDAY_TOKEN_URL = "https://cxm-api.fifa.com/fifaplusweb/api/external/gameDay/token";
     const FIFA_GAMEDAY_STORIES_URL = "https://gameday-prod.fifa.mangodev.co.uk/1-0/stories";
     const FIFA_STATS_FUNCTION_URL = "/.netlify/functions/fifa-stats";
+    const FIFA_TOURNAMENT_URL = "https://www.fifa.com/pt/tournaments/mens/worldcup/canadamexicousa2026";
+    const FIFA_WC26_LOGO_URL = "https://digitalhub.fifa.com/transform/157d23bf-7e13-4d7b-949e-5d27d340987e/WC26_Logo?&io=transform:fill&quality=75";
+    const FIFA_HERO_IMAGE_URL = "https://digitalhub.fifa.com/transform/c2108f71-c9c5-471c-8c5b-88e0cf139670/Scotland-v-Brazil-Group-C-FIFA-World-Cup-2026?focuspoint=0.38,0.33&io=transform:fill,aspectratio:16x9,width:1536&quality=75";
     const FIFA_PLAYER_STAT_CLASSES = [
       "icp_fdcp_goals",
       "icp_assists",
@@ -2872,6 +3131,8 @@
           dateDisplay: dateInfo?.display || match.dateDisplay,
           venue: venue || match.venue,
           stadiumCountry: item.Stadium?.IdCountry || match.stadiumCountry || "",
+          fifaMatchId: item.IdMatch || match.fifaMatchId || "",
+          fifaStageId: item.IdStage || match.fifaStageId || "",
           liveUpdatedAt: new Date().toISOString(),
           dataSource: "FIFA"
         };
@@ -3750,17 +4011,22 @@
         { label: live ? "Ao vivo agora" : "Proximo jogo", match: live || next },
         { label: "Proximos", match: upcoming[1] || upcoming[0] || next }
       ].filter(item => item.match);
+      const storyItems = coverStoryItems(matches, lead);
 
       els.cover.innerHTML = `
         <div class="cover-grid">
           <section class="cover-hero" aria-label="Capa da Copa">
-            <img class="cover-bg" src="https://images.pexels.com/photos/399187/pexels-photo-399187.jpeg?auto=compress&cs=tinysrgb&w=1600" alt="" loading="eager" referrerpolicy="no-referrer" />
+            <img class="cover-bg" src="${escapeAttr(FIFA_HERO_IMAGE_URL)}" alt="" loading="eager" referrerpolicy="no-referrer" />
             <div class="cover-hero-inner">
-              <div>
+              <div class="cover-hero-top">
                 <p class="cover-kicker">${escapeHtml(data.fifaCheckedAt ? `Atualizado FIFA ${formatCheckedAt(data.fifaCheckedAt)}` : "Painel Copa do Mundo 2026")}</p>
-                <h2 class="cover-title">${escapeHtml(lead ? `${lead.home.name} x ${lead.away.name}` : "Copa do Mundo 2026")}</h2>
-                <p class="cover-subtitle">${escapeHtml(lead ? `${lead.stage} - ${lead.dateDisplay || "horario a definir"} - ${lead.venue || "local a definir"}` : "Chave, grupos, simulacao e noticias em uma unica tela.")}</p>
+                <a class="official-logo-lockup" href="${escapeAttr(FIFA_TOURNAMENT_URL)}" target="_blank" rel="noreferrer">
+                  <img src="${escapeAttr(FIFA_WC26_LOGO_URL)}" alt="Copa do Mundo FIFA 2026" referrerpolicy="no-referrer" />
+                  <span>hub oficial</span>
+                </a>
               </div>
+              ${renderSpotlightMatch(lead)}
+              ${storyItems.length ? `<div class="story-rail">${storyItems.map(renderStoryCard).join("")}</div>` : ""}
               <div class="cover-match-grid">
                 ${coverMatches.map(item => coverMatchCard(item.label, item.match)).join("")}
               </div>
@@ -3780,8 +4046,12 @@
             </div>
           </aside>
         </div>
+        ${renderLeaderboards()}
       `;
       if (!state.newsLoaded && !state.newsLoading) loadNews();
+      if (!state.playerStatsCache.size && !state.playerStatsPromise) {
+        loadFifaPlayerStats().then(() => { if (state.data) renderCover(); }).catch(() => {});
+      }
     }
 
     function coverMatchCard(label, match) {
@@ -3791,9 +4061,139 @@
           <span>${escapeHtml(label)}</span>
           <strong>${teamFlag(match.home)} ${escapeHtml(match.home.name)} x ${teamFlag(match.away)} ${escapeHtml(match.away.name)}</strong>
           <small>${escapeHtml(match.badge || match.score || match.status || match.stage)} - ${escapeHtml(match.dateDisplay || "A definir")}</small>
-          <span class="youtube-pill" data-youtube-url="${escapeAttr(cazeTvMatchUrl(match))}">Assistir</span>
+          <div class="spotlight-actions">
+            <a class="youtube-pill" href="${escapeAttr(cazeTvMatchUrl(match))}" target="_blank" rel="noreferrer">Assistir</a>
+            <a class="link-pill" href="${escapeAttr(officialMatchUrl(match))}" target="_blank" rel="noreferrer">FIFA</a>
+          </div>
         </article>
       `;
+    }
+
+    function renderSpotlightMatch(match) {
+      if (!match) {
+        return `
+          <div class="live-spotlight">
+            <h2 class="cover-title">Copa do Mundo 2026</h2>
+            <p class="cover-subtitle">Chave, grupos, simulacao, noticias e estatisticas em uma unica tela.</p>
+          </div>
+        `;
+      }
+      const [homeScore, awayScore] = hasNumericScore(match) ? scoreParts(match) : ["", ""];
+      const score = homeScore !== "" && awayScore !== "" ? `${homeScore} - ${awayScore}` : (match.isLive ? "AO VIVO" : "x");
+      const badge = match.isLive ? "Ao vivo agora" : (match.isDone ? "Resultado final" : "Proximo jogo");
+      return `
+        <div class="live-spotlight">
+          <p class="cover-subtitle">${escapeHtml(`${badge} - ${match.stage || "Copa"} - ${match.dateDisplay || "horario a definir"}${match.venue ? ` - ${match.venue}` : ""}`)}</p>
+          <div class="spotlight-teams">
+            <div class="spotlight-team">${teamFlag(match.home)}<strong>${escapeHtml(match.home.name)}</strong></div>
+            <div class="spotlight-score">${escapeHtml(score)}</div>
+            <div class="spotlight-team">${teamFlag(match.away)}<strong>${escapeHtml(match.away.name)}</strong></div>
+          </div>
+          <div class="spotlight-actions">
+            <a class="youtube-pill" href="${escapeAttr(cazeTvMatchUrl(match))}" target="_blank" rel="noreferrer">Assistir</a>
+            <a class="link-pill" href="${escapeAttr(officialMatchUrl(match))}" target="_blank" rel="noreferrer">Match centre FIFA</a>
+            <button class="link-pill" type="button" data-match-id="${escapeAttr(match.id)}">Detalhes</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function coverStoryItems(matches, lead) {
+      const now = Date.now();
+      const pool = [
+        ...(matches || []).filter(match => match.isLive),
+        ...(matches || []).filter(match => !match.isDone && match.timestamp && match.timestamp >= now).slice(0, 8),
+        ...(matches || []).filter(match => match.isDone && match.timestamp && match.timestamp <= now).slice(-8).reverse()
+      ];
+      const seen = new Set();
+      return pool.filter(match => {
+        const key = match.id || match.matchNumber || `${match.home?.name}-${match.away?.name}`;
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return match !== lead;
+      }).slice(0, 12);
+    }
+
+    function renderStoryCard(match) {
+      const label = match.isLive ? "ao vivo" : (match.isDone ? "final" : (match.dateDisplay || "proximo"));
+      return `
+        <a class="story-card" href="${escapeAttr(officialMatchUrl(match))}" target="_blank" rel="noreferrer">
+          <span>${escapeHtml(label)}</span>
+          <strong>${escapeHtml(matchShortCode(match))}</strong>
+          <small>${escapeHtml(match.badge || match.score || match.status || match.stage || "")}</small>
+        </a>
+      `;
+    }
+
+    function renderLeaderboards() {
+      const leaders = [
+        leaderCard("Gols", "goals", value => value),
+        leaderCard("Assist.", "assists", value => value),
+        leaderCard("Passes", "passes", value => value),
+        leaderCard("Distancia", "total_distance", formatDistance)
+      ].filter(Boolean);
+      if (!leaders.length) return "";
+      return `
+        <section class="leaderboard-strip" aria-label="Lideres FIFA">
+          <div class="leaderboard-head">
+            <h2>Lideres FIFA em tempo real</h2>
+            <span>Gols, assistencias, passes e distancia cruzados do GameDay oficial.</span>
+          </div>
+          <div class="leader-grid">${leaders.join("")}</div>
+        </section>
+      `;
+    }
+
+    function leaderCard(label, statKey, formatter) {
+      const player = topStatLeader(statKey);
+      if (!player) return "";
+      const value = player[statKey];
+      return `
+        <article class="leader-card">
+          ${leaderPhoto(player)}
+          <div class="leader-meta">
+            <span>${escapeHtml(label)} - ${escapeHtml(player.teamCode || player.teamName || "FIFA")}</span>
+            <strong>${escapeHtml(player.name || "Jogador")}</strong>
+          </div>
+          <strong class="leader-value">${escapeHtml(formatter(value))}</strong>
+        </article>
+      `;
+    }
+
+    function topStatLeader(statKey) {
+      return uniqueStatPlayers()
+        .filter(player => Number(player?.[statKey]) > 0)
+        .sort((a, b) => Number(b[statKey]) - Number(a[statKey]))[0] || null;
+    }
+
+    function uniqueStatPlayers() {
+      const seen = new Set();
+      return [...state.playerStatsCache.values()].filter(player => {
+        const key = player.id || normalize(player.name);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    function leaderPhoto(player) {
+      const src = player.image ? `${player.image}?&io=transform:crop,height:850,width:850&quality=75` : "";
+      return src
+        ? `<img class="leader-avatar" src="${escapeAttr(src)}" alt="${escapeAttr(player.name || "")}" loading="lazy" referrerpolicy="no-referrer" />`
+        : `<span class="leader-avatar"></span>`;
+    }
+
+    function matchShortCode(match) {
+      const home = (match.home?.idCountry || match.home?.sourceName || match.home?.name || "").slice(0, 3).toUpperCase();
+      const away = (match.away?.idCountry || match.away?.sourceName || match.away?.name || "").slice(0, 3).toUpperCase();
+      return `${home || match.home?.name || "-"} x ${away || match.away?.name || "-"}`;
+    }
+
+    function officialMatchUrl(match) {
+      if (match?.fifaMatchId) {
+        return `https://www.fifa.com/pt/match-centre/match/17/285023/${encodeURIComponent(match.fifaStageId || "289287")}/${encodeURIComponent(match.fifaMatchId)}`;
+      }
+      return match?.reportHref || FIFA_TOURNAMENT_URL;
     }
 
     function renderNewsItems() {
@@ -4694,12 +5094,54 @@
         </section>
         <section class="model-panel">
           <h3>Próximas projeções</h3>
+          ${renderModelInsights(future)}
           <div class="projection-list">
             ${future.length ? future.map(match => matchCard(match)).join("") : `<div class="empty">Entre no modo estatística e clique em Projetar.</div>`}
           </div>
         </section>
       `;
       bindMatchCards();
+    }
+
+    function renderModelInsights(matches) {
+      const withProb = (matches || []).filter(match => match.probability);
+      if (!withProb.length) return "";
+      const favorite = [...withProb].sort((a, b) => modelFavoriteEdge(b) - modelFavoriteEdge(a))[0];
+      const balanced = [...withProb].sort((a, b) => modelFavoriteEdge(a) - modelFavoriteEdge(b))[0];
+      const goals = [...withProb].sort((a, b) => modelGoalTotal(b) - modelGoalTotal(a))[0];
+      return `
+        <div class="model-insights">
+          ${modelInsightCard("Favorito forte", favorite, `${modelWinnerName(favorite)} ${Math.max(favorite.probability.homeWin || 0, favorite.probability.awayWin || 0)}%`)}
+          ${modelInsightCard("Mais equilibrado", balanced, `${modelFavoriteEdge(balanced)} pts de diferenca`)}
+          ${modelInsightCard("Promessa de gols", goals, `xG ${goals.probability.xgHome} - ${goals.probability.xgAway}`)}
+        </div>
+      `;
+    }
+
+    function modelInsightCard(label, match, note) {
+      if (!match) return "";
+      return `
+        <article class="insight-card" data-match-id="${escapeAttr(match.id)}">
+          <span>${escapeHtml(label)}</span>
+          <strong>${escapeHtml(`${match.home.name} x ${match.away.name}`)}</strong>
+          <small>${escapeHtml(note || match.score || "")}</small>
+        </article>
+      `;
+    }
+
+    function modelFavoriteEdge(match) {
+      const probability = match?.probability || {};
+      return Math.abs(Number(probability.homeWin || 0) - Number(probability.awayWin || 0));
+    }
+
+    function modelGoalTotal(match) {
+      const probability = match?.probability || {};
+      return Number(probability.xgHome || 0) + Number(probability.xgAway || 0);
+    }
+
+    function modelWinnerName(match) {
+      const probability = match?.probability || {};
+      return Number(probability.homeWin || 0) >= Number(probability.awayWin || 0) ? match.home.name : match.away.name;
     }
 
     function renderTeamFactors(team) {
