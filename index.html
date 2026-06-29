@@ -1644,6 +1644,8 @@
       border: 0;
       background: transparent;
       cursor: pointer;
+      touch-action: none;
+      user-select: none;
     }
 
     .player-dot:hover strong {
@@ -1670,6 +1672,55 @@
     .player-dot.active strong {
       outline: 3px solid #f5c542;
       box-shadow: 0 0 0 6px rgba(245, 197, 66, .28), 0 4px 10px rgba(0,0,0,.25);
+    }
+
+    .substitution-picker {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      box-shadow: var(--shadow);
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .substitution-picker[hidden] {
+      display: none;
+    }
+
+    .substitution-picker-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .substitution-picker-head strong {
+      font-size: 13px;
+    }
+
+    .substitution-list {
+      display: grid;
+      gap: 6px;
+      max-height: 220px;
+      overflow: auto;
+    }
+
+    .substitution-option {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fbfdff;
+      padding: 7px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      text-align: left;
+    }
+
+    .substitution-option span {
+      color: var(--muted);
+      font-size: 11px;
     }
 
     .player-list {
@@ -2332,6 +2383,16 @@
           ["fwd", 50, 14]
         ]
       },
+      "4-1-2-3": {
+        label: "4-1-2-3",
+        slots: [
+          ["gk", 50, 90],
+          ["def", 20, 70], ["def", 40, 72], ["def", 60, 72], ["def", 80, 70],
+          ["mid", 50, 58],
+          ["mid", 36, 42], ["mid", 64, 42],
+          ["fwd", 24, 20], ["fwd", 50, 15], ["fwd", 76, 20]
+        ]
+      },
       "4-4-2": {
         label: "4-4-2",
         slots: [
@@ -2348,6 +2409,24 @@
           ["def", 30, 72], ["def", 50, 74], ["def", 70, 72],
           ["mid", 16, 50], ["mid", 36, 46], ["mid", 50, 42], ["mid", 64, 46], ["mid", 84, 50],
           ["fwd", 40, 18], ["fwd", 60, 18]
+        ]
+      },
+      "5-3-2": {
+        label: "5-3-2",
+        slots: [
+          ["gk", 50, 90],
+          ["def", 12, 68], ["def", 30, 72], ["def", 50, 74], ["def", 70, 72], ["def", 88, 68],
+          ["mid", 34, 45], ["mid", 50, 42], ["mid", 66, 45],
+          ["fwd", 40, 18], ["fwd", 60, 18]
+        ]
+      },
+      "3-4-3": {
+        label: "3-4-3",
+        slots: [
+          ["gk", 50, 90],
+          ["def", 30, 72], ["def", 50, 74], ["def", 70, 72],
+          ["mid", 18, 48], ["mid", 40, 44], ["mid", 60, 44], ["mid", 82, 48],
+          ["fwd", 25, 20], ["fwd", 50, 16], ["fwd", 75, 20]
         ]
       }
     };
@@ -2462,11 +2541,13 @@
       simScores: loadSimScores(),
       lineupPlans: loadLineupPlans(),
       lineupSelections: loadLineupSelections(),
+      lineupManual: {},
       lineupFormations: loadLineupFormations(),
       selectedLineupSlot: null,
       currentModal: null,
       teamIndex: new Map(),
       squadCache: new Map(),
+      liveLineupCache: new Map(),
       playerCache: new Map(),
       playerStatsCache: new Map(),
       playerStatsPromise: null,
@@ -3106,7 +3187,8 @@
             sourceName: homeName || match.home.sourceName,
             idTeam: item.Home?.IdTeam || match.home.idTeam,
             idCountry: item.Home?.IdCountry || match.home.idCountry,
-            flag: fifaFlag(item.Home?.PictureUrl) || match.home.flag
+            flag: fifaFlag(item.Home?.PictureUrl) || match.home.flag,
+            tactics: item.Home?.Tactics || match.home.tactics || ""
           },
           away: {
             ...match.away,
@@ -3114,7 +3196,8 @@
             sourceName: awayName || match.away.sourceName,
             idTeam: item.Away?.IdTeam || match.away.idTeam,
             idCountry: item.Away?.IdCountry || match.away.idCountry,
-            flag: fifaFlag(item.Away?.PictureUrl) || match.away.flag
+            flag: fifaFlag(item.Away?.PictureUrl) || match.away.flag,
+            tactics: item.Away?.Tactics || match.away.tactics || ""
           },
           score: hasScore ? `${homeScore}-${awayScore}` : match.score,
           scoreRaw: hasScore ? `${homeScore}-${awayScore}` : match.scoreRaw,
@@ -3137,18 +3220,37 @@
           dataSource: "FIFA"
         };
       };
-      const groups = data.groups.map(group => ({
+      let groups = data.groups.map(group => ({
         ...group,
         matches: group.matches.map(update)
       }));
-      const knockout = data.knockout.map(round => ({
+      let knockout = data.knockout.map(round => ({
         ...round,
         matches: round.matches.map(update)
       }));
-      const allMatches = [
+      const knownNumbers = new Set([
+        ...groups.flatMap(group => group.matches),
+        ...knockout.flatMap(round => round.matches)
+      ].map(match => Number(match.matchNumber)).filter(Boolean));
+      fifaMatches.forEach(item => {
+        const number = Number(item.MatchNumber);
+        if (!number || knownNumbers.has(number)) return;
+        const match = fifaItemToMatch(item);
+        if (!match) return;
+        knownNumbers.add(number);
+        if (match.group) {
+          groups = groups.map(group => group.letter === match.group ? { ...group, matches: [...group.matches, match] } : group);
+        } else {
+          const roundId = fifaRoundId(number, item.IdStage);
+          knockout = knockout.map(round => round.id === roundId ? { ...round, matches: [...round.matches, match] } : round);
+        }
+      });
+      groups = groups.map(group => ({ ...group, matches: dedupeMatches(group.matches).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0)) }));
+      knockout = knockout.map(round => ({ ...round, matches: dedupeMatches(round.matches).sort((a, b) => (Number(a.matchNumber) || 0) - (Number(b.matchNumber) || 0)) }));
+      const allMatches = dedupeMatches([
         ...groups.flatMap(group => group.matches.map(match => ({ ...match, group: group.letter }))),
         ...knockout.flatMap(round => round.matches)
-      ].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+      ]).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
       return {
         ...data,
         groups,
@@ -3156,6 +3258,106 @@
         allMatches,
         fifaCheckedAt: new Date().toISOString()
       };
+    }
+
+    function fifaItemToMatch(item) {
+      const number = Number(item?.MatchNumber);
+      if (!number) return null;
+      const statusInfo = fifaStatus(item);
+      const dateInfo = parseFifaDate(item.Date);
+      const homeScore = numberOrNull(item.HomeTeamScore ?? item.Home?.Score);
+      const awayScore = numberOrNull(item.AwayTeamScore ?? item.Away?.Score);
+      const hasScore = homeScore !== null && awayScore !== null;
+      const group = fifaGroupLetter(item);
+      const stage = group ? `Grupo ${group}` : fifaStageLabel(number, item.IdStage, item.StageName);
+      const venue = [localizedDescription(item.Stadium?.Name), localizedDescription(item.Stadium?.CityName)].filter(Boolean).join(", ");
+      return {
+        id: `FIFA-${number}`,
+        matchNumber: number,
+        label: `Jogo ${number}`,
+        stage,
+        group,
+        home: fifaTeam(item.Home),
+        away: fifaTeam(item.Away),
+        score: hasScore ? `${homeScore}-${awayScore}` : "",
+        scoreRaw: hasScore ? `${homeScore}-${awayScore}` : "",
+        isDone: statusInfo.isDone,
+        isLive: statusInfo.isLive,
+        status: statusInfo.label,
+        statusClass: statusInfo.className,
+        badge: statusInfo.badge || (hasScore ? `${homeScore}-${awayScore}` : `Jogo ${number}`),
+        fifaStatusCode: item.MatchStatus,
+        fifaResultType: item.ResultType,
+        fifaMatchTime: item.MatchTime || "",
+        timestamp: dateInfo?.timestamp || 0,
+        isoDate: dateInfo?.isoDate || "",
+        dateDisplay: dateInfo?.display || "",
+        venue,
+        stadiumCountry: item.Stadium?.IdCountry || "",
+        fifaMatchId: item.IdMatch || "",
+        fifaStageId: item.IdStage || "",
+        dataSource: "FIFA",
+        liveUpdatedAt: new Date().toISOString()
+      };
+    }
+
+    function fifaTeam(team) {
+      const name = team?.ShortClubName || localizedDescription(team?.TeamName) || team?.Abbreviation || "A definir";
+      return {
+        name: localizeName(name),
+        sourceName: name,
+        idTeam: team?.IdTeam || "",
+        idCountry: team?.IdCountry || team?.Abbreviation || "",
+        flag: fifaFlag(team?.PictureUrl) || "",
+        tactics: team?.Tactics || ""
+      };
+    }
+
+    function fifaGroupLetter(item) {
+      const number = Number(item?.MatchNumber);
+      if (number > 72) return "";
+      const text = localizedDescription(item?.GroupName) || "";
+      return (text.match(/Grupo\s+([A-L])/i) || [])[1] || "";
+    }
+
+    function fifaRoundId(number, idStage = "") {
+      if (Number(idStage) === 289287 || (number >= 73 && number <= 88)) return "Round_of_32";
+      if (Number(idStage) === 289288 || (number >= 89 && number <= 96)) return "Round_of_16";
+      if (Number(idStage) === 289289 || (number >= 97 && number <= 100)) return "Quarterfinals";
+      if (Number(idStage) === 289290 || number === 101 || number === 102) return "Semifinals";
+      if (Number(idStage) === 289291 || number === 103) return "Match_for_third_place";
+      if (Number(idStage) === 289292 || number === 104) return "Final";
+      return "Round_of_32";
+    }
+
+    function fifaStageLabel(number, idStage, stageName) {
+      const labels = {
+        Round_of_32: "Rodada de 32",
+        Round_of_16: "Oitavas",
+        Quarterfinals: "Quartas",
+        Semifinals: "Semifinais",
+        Match_for_third_place: "3º lugar",
+        Final: "Final"
+      };
+      return labels[fifaRoundId(number, idStage)] || localizedDescription(stageName) || "Mata-mata";
+    }
+
+    function dedupeMatches(matches) {
+      const byKey = new Map();
+      (matches || []).forEach(match => {
+        const key = match.matchNumber ? `n:${match.matchNumber}` : (match.fifaMatchId ? `f:${match.fifaMatchId}` : `id:${match.id}`);
+        const previous = byKey.get(key);
+        byKey.set(key, betterMatch(previous, match));
+      });
+      return [...byKey.values()];
+    }
+
+    function betterMatch(previous, next) {
+      if (!previous) return next;
+      if (next?.dataSource === "FIFA" && previous?.dataSource !== "FIFA") return next;
+      if (next?.fifaMatchId && !previous?.fifaMatchId) return next;
+      if (next?.score && !previous?.score) return next;
+      return previous;
     }
 
     function rebuildTeamIndex(data) {
@@ -3173,7 +3375,8 @@
             sourceName: team.sourceName || team.name,
             flag: team.flag || previous.flag,
             idTeam: team.idTeam || previous.idTeam,
-            idCountry: team.idCountry || previous.idCountry
+            idCountry: team.idCountry || previous.idCountry,
+            tactics: team.tactics || previous.tactics || ""
           });
           if (team.idTeam) state.teamIndex.set(String(team.idTeam), state.teamIndex.get(key));
         });
@@ -3205,6 +3408,9 @@
     }
 
     function positionRole(player) {
+      if (Number.isInteger(player?.FifaLivePosition)) {
+        return { 0: "gk", 1: "def", 2: "mid", 3: "fwd" }[Number(player.FifaLivePosition)] || "mid";
+      }
       const text = playerPosition(player);
       if (/goalkeeper/i.test(text)) return "gk";
       if (/defender|back/i.test(text)) return "def";
@@ -4851,9 +5057,10 @@
     }
 
     function teamCrest(team) {
+      const official = officialTeamBadge(team);
       const cached = state.badgeCache.get(String(team?.idTeam || normalize(team?.name || "")));
       const fallback = team?.flag || "";
-      const src = cached || fallback;
+      const src = official || cached || fallback;
       return `
         <div class="team-crest" ${teamAttrs(team)} title="Abrir selecao">
           ${src ? `<img data-team-badge="${escapeAttr(team?.idTeam || normalize(team?.name || ""))}" src="${escapeAttr(src)}" alt="${escapeAttr(team?.name || "")}" loading="lazy" referrerpolicy="no-referrer" onerror="this.src='${escapeAttr(fallback)}'" />` : `<span class="flag" aria-hidden="true"></span>`}
@@ -4861,9 +5068,19 @@
       `;
     }
 
+    function officialTeamBadge(team) {
+      const code = (team?.idCountry || "").toString().toUpperCase();
+      return /^[A-Z]{3}$/.test(code) ? `https://api.fifa.com/api/v3/picture/associations-sq-3/${code}` : "";
+    }
+
     async function loadTeamBadge(team) {
       const key = String(team?.idTeam || normalize(team?.name || ""));
       if (!key || state.badgeCache.has(key)) return;
+      const official = officialTeamBadge(team);
+      if (official) {
+        state.badgeCache.set(key, official);
+        return;
+      }
       try {
         let hit = null;
         for (const search of teamBadgeQueries(team)) {
@@ -5198,7 +5415,82 @@
       }
       await loadFifaPlayerStats();
       if (Array.isArray(squad?.Players)) mergeFifaStatsIntoPlayers(squad.Players);
+      await mergeLatestLiveLineup(team, squad);
       renderTeamModal(team, squad);
+    }
+
+    async function mergeLatestLiveLineup(team, squad) {
+      const match = latestMatchForTeam(team);
+      if (!match?.fifaMatchId || !squad) return;
+      let live = state.liveLineupCache.get(String(match.fifaMatchId));
+      if (!live) {
+        try {
+          const response = await fetch(`https://api.fifa.com/api/v3/live/football/${encodeURIComponent(match.fifaMatchId)}?language=pt`, { cache: "no-store" });
+          if (!response.ok) return;
+          live = await response.json();
+          state.liveLineupCache.set(String(match.fifaMatchId), live);
+        } catch {
+          return;
+        }
+      }
+      const side = String(live?.HomeTeam?.IdTeam) === String(team.idTeam) ? live.HomeTeam
+        : (String(live?.AwayTeam?.IdTeam) === String(team.idTeam) ? live.AwayTeam : null);
+      if (!side?.Players?.length) return;
+      team.tactics = side.Tactics || team.tactics || "";
+      const byId = new Map((squad.Players || []).map(player => [String(player.IdPlayer), player]));
+      side.Players.forEach(livePlayer => {
+        const id = String(livePlayer.IdPlayer || "");
+        if (!id) return;
+        let player = byId.get(id);
+        if (!player) {
+          player = livePlayerToSquadPlayer(livePlayer);
+          squad.Players.push(player);
+          byId.set(id, player);
+        }
+        player.FifaLineupStatus = Number(livePlayer.Status) || 0;
+        player.FifaLivePosition = Number(livePlayer.Position);
+        player.JerseyNum = player.JerseyNum || livePlayer.ShirtNumber;
+        player.Captain = Boolean(livePlayer.Captain);
+        if (livePlayer.PlayerPicture?.PictureUrl && !player.PlayerPicture?.PictureUrl) player.PlayerPicture = livePlayer.PlayerPicture;
+      });
+    }
+
+    function latestMatchForTeam(team) {
+      const idTeam = String(team?.idTeam || "");
+      const name = normalize(team?.name || "");
+      const now = Date.now();
+      return ((state.data?.allMatches || state.viewData?.allMatches || [])
+        .filter(match => match.fifaMatchId && (
+          String(match.home?.idTeam || "") === idTeam ||
+          String(match.away?.idTeam || "") === idTeam ||
+          normalize(match.home?.name || "") === name ||
+          normalize(match.away?.name || "") === name
+        ))
+        .sort((a, b) => {
+          const aPast = (a.timestamp || 0) <= now ? 1 : 0;
+          const bPast = (b.timestamp || 0) <= now ? 1 : 0;
+          if (aPast !== bPast) return bPast - aPast;
+          return Math.abs((a.timestamp || 0) - now) - Math.abs((b.timestamp || 0) - now);
+        })[0]) || null;
+    }
+
+    function livePlayerToSquadPlayer(player) {
+      const position = {
+        0: "Goalkeeper",
+        1: "Defender",
+        2: "Midfielder",
+        3: "Forward"
+      }[Number(player.Position)] || "Midfielder";
+      return {
+        IdPlayer: player.IdPlayer,
+        IdTeam: player.IdTeam,
+        JerseyNum: player.ShirtNumber,
+        PlayerPicture: player.PlayerPicture,
+        PositionLocalized: [{ Locale: "en-GB", Description: position }],
+        RealPositionLocalized: [{ Locale: "en-GB", Description: position }],
+        PlayerName: [{ Locale: "en-GB", Description: player.PlayerName || "" }],
+        ShortName: [{ Locale: "en-GB", Description: player.ShortName || "" }]
+      };
     }
 
     function renderTeamModal(team, squad) {
@@ -5270,6 +5562,7 @@
               </div>
             </div>
             <p class="detail-label">Clique em uma vaga no campo, depois clique em Escalar no banco. Arrastar muda a função no campo e recalcula a projeção.</p>
+            <div class="substitution-picker" id="substitutionPicker" hidden></div>
             <button class="ghost-button" type="button" data-reset-lineup="${escapeAttr(teamId)}">Restaurar provavel</button>
           </div>
           <div class="roster-panel">
@@ -5307,7 +5600,23 @@
     }
 
     function formationForTeam(teamId = "") {
-      return state.lineupFormations[String(teamId)] || "4-3-3";
+      const saved = state.lineupFormations[String(teamId)];
+      if (saved && FORMATION_DEFS[saved]) return saved;
+      const team = state.teamIndex.get(String(teamId)) || state.teamIndex.get(normalize(String(teamId))) || state.currentModal?.team || {};
+      const fifaFormation = normalizeFormation(team?.tactics || "");
+      return FORMATION_DEFS[fifaFormation] ? fifaFormation : "4-3-3";
+    }
+
+    function normalizeFormation(value) {
+      const text = String(value || "").replace(/[^\d-]/g, "");
+      if (FORMATION_DEFS[text]) return text;
+      if (/^4123$/.test(text)) return "4-1-2-3";
+      if (/^4231$/.test(text)) return "4-2-3-1";
+      if (/^442$/.test(text)) return "4-4-2";
+      if (/^352$/.test(text)) return "3-5-2";
+      if (/^532$/.test(text)) return "5-3-2";
+      if (/^343$/.test(text)) return "3-4-3";
+      return "";
     }
 
     function formationSlots(teamId = "") {
@@ -5325,6 +5634,10 @@
 
     function defaultLineup(players, formation = "4-3-3") {
       const slots = FORMATION_DEFS[formation]?.slots || FORMATION_DEFS["4-3-3"].slots;
+      const liveStarters = (players || []).filter(player => Number(player.FifaLineupStatus) === 1);
+      if (liveStarters.length >= 8) {
+        return fitPlayersToSlots(liveStarters, slots, players || []);
+      }
       const groups = {
         gk: players.filter(player => positionRole(player) === "gk").sort((a, b) => playerAttributes(b).overall - playerAttributes(a).overall),
         def: players.filter(player => positionRole(player) === "def").sort((a, b) => playerAttributes(b).overall - playerAttributes(a).overall),
@@ -5343,9 +5656,29 @@
       return [...picked, ...fallback].slice(0, 11);
     }
 
+    function fitPlayersToSlots(starters, slots, allPlayers) {
+      const groups = {
+        gk: starters.filter(player => positionRole(player) === "gk"),
+        def: starters.filter(player => positionRole(player) === "def"),
+        mid: starters.filter(player => positionRole(player) === "mid"),
+        fwd: starters.filter(player => positionRole(player) === "fwd")
+      };
+      const picked = [];
+      slots.forEach(([role]) => {
+        const player = groups[role]?.shift() || groups.mid?.shift() || groups.def?.shift() || groups.fwd?.shift() || groups.gk?.shift();
+        if (player) picked.push(player);
+      });
+      const used = new Set(picked.map(player => String(player.IdPlayer)));
+      const rest = [...starters, ...(allPlayers || [])]
+        .filter(player => !used.has(String(player.IdPlayer)))
+        .sort((a, b) => (Number(a.FifaLineupStatus) || 9) - (Number(b.FifaLineupStatus) || 9));
+      return [...picked, ...rest].slice(0, 11);
+    }
+
     function lineupForTeam(players, teamId = "") {
       const ids = state.lineupSelections[String(teamId)];
-      if (Array.isArray(ids) && ids.length) {
+      const liveStarters = (players || []).filter(player => Number(player.FifaLineupStatus) === 1);
+      if (Array.isArray(ids) && ids.length && (!liveStarters.length || state.lineupManual[String(teamId)])) {
         const byId = new Map((players || []).map(player => [String(player.IdPlayer), player]));
         const selected = ids.map(id => byId.get(String(id))).filter(Boolean);
         if (selected.length >= 8) return selected.slice(0, 11);
@@ -5373,10 +5706,43 @@
       if (slot < 0) slot = ids.length - 1;
       ids[slot] = String(playerId);
       state.lineupSelections[String(teamId)] = ids.slice(0, 11);
+      state.lineupManual[String(teamId)] = true;
       saveLineupSelections();
       state.viewData = buildViewData();
       render();
       renderTeamModal(modal.team, modal.squad);
+    }
+
+    function openSubstitutionPicker(teamId, slot, currentPlayerId) {
+      const box = document.getElementById("substitutionPicker");
+      const modal = state.currentModal;
+      const players = Array.isArray(modal?.squad?.Players) ? modal.squad.Players : [];
+      if (!box || !players.length) return;
+      const lineup = lineupForTeam(players, teamId);
+      const lineupIds = new Set(lineup.map(player => String(player.IdPlayer)));
+      const current = players.find(player => String(player.IdPlayer) === String(currentPlayerId));
+      const reserves = players
+        .filter(player => !lineupIds.has(String(player.IdPlayer)))
+        .sort((a, b) => playerAttributes(b).overall - playerAttributes(a).overall)
+        .slice(0, 18);
+      box.hidden = false;
+      box.innerHTML = `
+        <div class="substitution-picker-head">
+          <strong>Substituir ${escapeHtml(current ? playerShortName(current) : `vaga ${Number(slot) + 1}`)}</strong>
+          <button class="ghost-button" type="button" data-close-substitution>Fechar</button>
+        </div>
+        <div class="substitution-list">
+          ${reserves.length ? reserves.map(player => {
+            const attrs = playerAttributes(player);
+            return `
+              <button class="substitution-option" type="button" data-sub-player="${escapeAttr(player.IdPlayer || "")}" data-sub-team="${escapeAttr(teamId)}" data-sub-slot="${escapeAttr(slot)}">
+                <span><strong>${escapeHtml(playerShortName(player))}</strong><br>${escapeHtml(playerPosition(player))} - GER ${attrs.overall} - MOR ${attrs.moral}</span>
+                <strong>Entrar</strong>
+              </button>
+            `;
+          }).join("") : `<div class="empty">Sem reservas disponiveis.</div>`}
+        </div>
+      `;
     }
 
     function playerDot(player, index, teamId = "") {
@@ -5386,7 +5752,7 @@
       const [x, y] = saved ? [Number(saved.x) || 50, Number(saved.y) || 50] : [slot[1], slot[2]];
       const name = playerShortName(player);
       const active = state.selectedLineupSlot?.teamId === String(teamId) && state.selectedLineupSlot?.slot === index ? " active" : "";
-      return `<button class="player-dot${active}" type="button" draggable="true" title="${escapeAttr(roleLabel(slot[0]))}: clique para abrir ficha ou arraste para mudar a funcao" data-player-id="${escapeAttr(player.IdPlayer || "")}" data-lineup-player="${escapeAttr(player.IdPlayer || "")}" data-lineup-slot="${index}" style="left:${x}%;top:${y}%"><strong>${escapeHtml(player.JerseyNum || index + 1)}</strong><span>${escapeHtml(name)}</span></button>`;
+      return `<button class="player-dot${active}" type="button" draggable="false" title="${escapeAttr(roleLabel(slot[0]))}: clique para abrir ficha ou arraste para reposicionar" data-player-id="${escapeAttr(player.IdPlayer || "")}" data-lineup-player="${escapeAttr(player.IdPlayer || "")}" data-lineup-slot="${index}" style="left:${x}%;top:${y}%"><strong>${escapeHtml(player.JerseyNum || index + 1)}</strong><span>${escapeHtml(name)}</span></button>`;
     }
 
     function legacyPlayerCard(player) {
@@ -5556,18 +5922,26 @@
         event.stopPropagation();
         const teamId = subButton.getAttribute("data-sub-team");
         const playerId = subButton.getAttribute("data-sub-player");
+        const fixedSlot = subButton.getAttribute("data-sub-slot");
         const slotSelect = document.querySelector(`[data-replace-slot-for="${playerId}"]`);
-        const selectedSlot = slotSelect ? Number(slotSelect.value) : null;
+        const selectedSlot = fixedSlot !== null ? Number(fixedSlot) : (slotSelect ? Number(slotSelect.value) : null);
         const slot = Number.isInteger(selectedSlot)
           ? selectedSlot
           : (state.selectedLineupSlot?.teamId === String(teamId) ? state.selectedLineupSlot.slot : null);
         replaceLineupPlayer(teamId, playerId, slot);
         return;
       }
+      const closeSubstitution = event.target.closest("[data-close-substitution]");
+      if (closeSubstitution) {
+        const box = document.getElementById("substitutionPicker");
+        if (box) box.hidden = true;
+        return;
+      }
       const resetLineup = event.target.closest("[data-reset-lineup]");
       if (resetLineup) {
         const teamId = resetLineup.getAttribute("data-reset-lineup");
         delete state.lineupSelections[String(teamId)];
+        delete state.lineupManual[String(teamId)];
         state.selectedLineupSlot = null;
         saveLineupSelections();
         if (state.currentModal) renderTeamModal(state.currentModal.team, state.currentModal.squad);
@@ -5612,6 +5986,19 @@
         saveSimScores();
         render();
       }
+    });
+
+    document.addEventListener("dblclick", event => {
+      const dot = event.target.closest("[data-lineup-player]");
+      if (!dot) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const pitch = dot.closest("[data-lineup-team]");
+      openSubstitutionPicker(
+        pitch?.getAttribute("data-lineup-team") || "",
+        Number(dot.getAttribute("data-lineup-slot")) || 0,
+        dot.getAttribute("data-lineup-player")
+      );
     });
 
     function openPhotoLightbox(url, name) {
@@ -5661,6 +6048,7 @@
       const dot = event.target.closest("[data-lineup-player]");
       const pitch = dot?.closest("[data-lineup-team]");
       if (!dot || !pitch) return;
+      event.preventDefault();
       lineupDrag = {
         dot,
         pitch,
@@ -5704,6 +6092,7 @@
         state.lineupFormations[String(teamId)] = formationInput.value;
         delete state.lineupSelections[String(teamId)];
         delete state.lineupPlans[String(teamId)];
+        delete state.lineupManual[String(teamId)];
         state.selectedLineupSlot = null;
         saveLineupFormations();
         saveLineupSelections();
