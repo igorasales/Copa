@@ -1657,6 +1657,29 @@
       cursor: grabbing;
     }
 
+    .player-dot.drop-target strong {
+      background: #f5c542;
+      color: #1b1d24;
+      outline: 4px solid rgba(245, 197, 66, .42);
+      box-shadow: 0 0 0 10px rgba(245, 197, 66, .18), 0 8px 18px rgba(0,0,0,.28);
+      transform: scale(1.12);
+    }
+
+    .player-dot.drop-target span::after {
+      content: "Solte para trocar";
+      display: block;
+      width: max-content;
+      max-width: 96px;
+      margin: 3px auto 0;
+      border-radius: 999px;
+      background: rgba(10, 20, 32, .82);
+      color: #fff;
+      padding: 2px 6px;
+      font-size: 9px;
+      font-weight: 800;
+      text-shadow: none;
+    }
+
     .player-dot strong {
       width: 28px;
       height: 28px;
@@ -1769,6 +1792,48 @@
     .player-card.selected {
       border-color: var(--green);
       background: #f2fbf6;
+    }
+
+    .player-card[draggable="true"] {
+      cursor: grab;
+      position: relative;
+    }
+
+    .player-card[draggable="true"]::after {
+      content: "Arrastar para campo";
+      position: absolute;
+      right: 10px;
+      bottom: 8px;
+      border: 1px solid rgba(29, 95, 191, .22);
+      border-radius: 999px;
+      background: #eef5ff;
+      color: var(--blue);
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 780;
+      opacity: 0;
+      transform: translateY(4px);
+      pointer-events: none;
+      transition: opacity .16s ease, transform .16s ease;
+    }
+
+    .player-card[draggable="true"]:hover::after,
+    .player-card.drag-ready::after,
+    .player-card.dragging-reserve::after {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .player-card.drag-ready,
+    .player-card.dragging-reserve {
+      border-color: var(--blue);
+      background: #f4f8ff;
+      box-shadow: 0 0 0 3px rgba(29, 95, 191, .12);
+    }
+
+    .player-card.dragging-reserve {
+      cursor: grabbing;
+      opacity: .72;
     }
 
     .sub-button {
@@ -6220,20 +6285,52 @@
       els.photoLightboxImg.src = "";
     }
 
+    function clearBenchDragVisuals() {
+      document.querySelectorAll(".player-card.drag-ready, .player-card.dragging-reserve").forEach(card => {
+        card.classList.remove("drag-ready", "dragging-reserve");
+      });
+      document.querySelectorAll(".player-dot.drop-target").forEach(dot => dot.classList.remove("drop-target"));
+    }
+
+    function setDropTarget(dot) {
+      document.querySelectorAll(".player-dot.drop-target").forEach(item => {
+        if (item !== dot) item.classList.remove("drop-target");
+      });
+      dot?.classList.add("drop-target");
+    }
+
+    document.addEventListener("pointerdown", event => {
+      const card = event.target.closest("[data-drag-sub-player]");
+      if (!card) return;
+      card.classList.add("drag-ready");
+    });
+
     document.addEventListener("dragstart", event => {
       const card = event.target.closest("[data-drag-sub-player]");
       if (!card) return;
       benchDrag = {
         teamId: card.getAttribute("data-drag-sub-team"),
-        playerId: card.getAttribute("data-drag-sub-player")
+        playerId: card.getAttribute("data-drag-sub-player"),
+        card
       };
+      card.classList.add("dragging-reserve");
+      card.classList.remove("drag-ready");
       event.dataTransfer?.setData("text/plain", benchDrag.playerId);
       event.dataTransfer?.setDragImage?.(card, 20, 20);
     });
 
     document.addEventListener("dragover", event => {
-      if (!benchDrag || !event.target.closest("[data-lineup-player]")) return;
+      if (!benchDrag) return;
+      const dot = event.target.closest("[data-lineup-player]");
+      if (!dot) return;
       event.preventDefault();
+      setDropTarget(dot);
+    });
+
+    document.addEventListener("dragleave", event => {
+      if (!benchDrag) return;
+      const dot = event.target.closest("[data-lineup-player]");
+      if (dot && !dot.contains(event.relatedTarget)) dot.classList.remove("drop-target");
     });
 
     document.addEventListener("drop", event => {
@@ -6243,12 +6340,18 @@
       const pitch = dot.closest("[data-lineup-team]");
       const teamId = pitch?.getAttribute("data-lineup-team") || benchDrag.teamId;
       const slot = Number(dot.getAttribute("data-lineup-slot")) || 0;
+      clearBenchDragVisuals();
       replaceLineupPlayer(teamId, benchDrag.playerId, slot);
       benchDrag = null;
     });
 
     document.addEventListener("dragend", () => {
+      clearBenchDragVisuals();
       benchDrag = null;
+    });
+
+    document.addEventListener("pointerup", () => {
+      if (!benchDrag) document.querySelectorAll(".player-card.drag-ready").forEach(card => card.classList.remove("drag-ready"));
     });
 
     document.addEventListener("pointerdown", event => {
