@@ -3176,36 +3176,23 @@
         const hasScore = homeScore !== null && awayScore !== null;
         const statusInfo = fifaStatus(item);
         const dateInfo = parseFifaDate(item.Date);
-        const homeName = item.Home?.ShortClubName || localizedDescription(item.Home?.TeamName);
-        const awayName = item.Away?.ShortClubName || localizedDescription(item.Away?.TeamName);
+        const homeTeam = fifaTeam(item.Home, item.PlaceHolderA, match.home);
+        const awayTeam = fifaTeam(item.Away, item.PlaceHolderB, match.away);
+        const penaltyInfo = fifaPenaltyInfo(item, homeTeam, awayTeam);
         const venue = [localizedDescription(item.Stadium?.Name), localizedDescription(item.Stadium?.CityName)].filter(Boolean).join(", ");
         return {
           ...match,
-          home: {
-            ...match.home,
-            name: homeName ? localizeName(homeName) : match.home.name,
-            sourceName: homeName || match.home.sourceName,
-            idTeam: item.Home?.IdTeam || match.home.idTeam,
-            idCountry: item.Home?.IdCountry || match.home.idCountry,
-            flag: fifaFlag(item.Home?.PictureUrl) || match.home.flag,
-            tactics: item.Home?.Tactics || match.home.tactics || ""
-          },
-          away: {
-            ...match.away,
-            name: awayName ? localizeName(awayName) : match.away.name,
-            sourceName: awayName || match.away.sourceName,
-            idTeam: item.Away?.IdTeam || match.away.idTeam,
-            idCountry: item.Away?.IdCountry || match.away.idCountry,
-            flag: fifaFlag(item.Away?.PictureUrl) || match.away.flag,
-            tactics: item.Away?.Tactics || match.away.tactics || ""
-          },
+          home: mergeTeam(match.home, homeTeam),
+          away: mergeTeam(match.away, awayTeam),
           score: hasScore ? `${homeScore}-${awayScore}` : match.score,
           scoreRaw: hasScore ? `${homeScore}-${awayScore}` : match.scoreRaw,
           isDone: statusInfo.isDone,
           isLive: statusInfo.isLive,
           status: statusInfo.label,
           statusClass: statusInfo.className,
-          badge: statusInfo.badge || (hasScore ? `${homeScore}-${awayScore}` : match.label),
+          badge: fifaMatchBadge(statusInfo, hasScore, homeScore, awayScore, penaltyInfo, match.label),
+          penaltyScore: penaltyInfo.score || match.penaltyScore || "",
+          penaltyWinner: penaltyInfo.winner || match.penaltyWinner || "",
           fifaStatusCode: item.MatchStatus,
           fifaResultType: item.ResultType,
           fifaMatchTime: item.MatchTime || "",
@@ -3217,7 +3204,8 @@
           fifaMatchId: item.IdMatch || match.fifaMatchId || "",
           fifaStageId: item.IdStage || match.fifaStageId || "",
           liveUpdatedAt: new Date().toISOString(),
-          dataSource: "FIFA"
+          dataSource: "FIFA",
+          dependsOn: mergeOfficialDependencies(fifaDependencies(item), match.dependsOn)
         };
       };
       let groups = data.groups.map(group => ({
@@ -3271,21 +3259,26 @@
       const group = fifaGroupLetter(item);
       const stage = group ? `Grupo ${group}` : fifaStageLabel(number, item.IdStage, item.StageName);
       const venue = [localizedDescription(item.Stadium?.Name), localizedDescription(item.Stadium?.CityName)].filter(Boolean).join(", ");
+      const homeTeam = fifaTeam(item.Home, item.PlaceHolderA);
+      const awayTeam = fifaTeam(item.Away, item.PlaceHolderB);
+      const penaltyInfo = fifaPenaltyInfo(item, homeTeam, awayTeam);
       return {
         id: `FIFA-${number}`,
         matchNumber: number,
         label: `Jogo ${number}`,
         stage,
         group,
-        home: fifaTeam(item.Home),
-        away: fifaTeam(item.Away),
+        home: homeTeam,
+        away: awayTeam,
         score: hasScore ? `${homeScore}-${awayScore}` : "",
         scoreRaw: hasScore ? `${homeScore}-${awayScore}` : "",
         isDone: statusInfo.isDone,
         isLive: statusInfo.isLive,
         status: statusInfo.label,
         statusClass: statusInfo.className,
-        badge: statusInfo.badge || (hasScore ? `${homeScore}-${awayScore}` : `Jogo ${number}`),
+        badge: fifaMatchBadge(statusInfo, hasScore, homeScore, awayScore, penaltyInfo, `Jogo ${number}`),
+        penaltyScore: penaltyInfo.score || "",
+        penaltyWinner: penaltyInfo.winner || "",
         fifaStatusCode: item.MatchStatus,
         fifaResultType: item.ResultType,
         fifaMatchTime: item.MatchTime || "",
@@ -3297,20 +3290,107 @@
         fifaMatchId: item.IdMatch || "",
         fifaStageId: item.IdStage || "",
         dataSource: "FIFA",
-        liveUpdatedAt: new Date().toISOString()
+        liveUpdatedAt: new Date().toISOString(),
+        dependsOn: fifaDependencies(item)
       };
     }
 
-    function fifaTeam(team) {
-      const name = team?.ShortClubName || localizedDescription(team?.TeamName) || team?.Abbreviation || "A definir";
+    function fifaTeam(team, placeholder = "", fallback = null) {
+      if (!team) return fifaPlaceholderTeam(placeholder, fallback);
+      const name = team.ShortClubName || localizedDescription(team.TeamName) || team.Abbreviation || "";
       return {
-        name: localizeName(name),
-        sourceName: name,
-        idTeam: team?.IdTeam || "",
-        idCountry: team?.IdCountry || team?.Abbreviation || "",
-        flag: fifaFlag(team?.PictureUrl) || "",
-        tactics: team?.Tactics || ""
+        name: localizeName(name || fallback?.name || "A definir"),
+        sourceName: name || fallback?.sourceName || fallback?.name || "A definir",
+        idTeam: team.IdTeam || fallback?.idTeam || "",
+        idCountry: team.IdCountry || team.Abbreviation || fallback?.idCountry || "",
+        flag: fifaFlag(team.PictureUrl) || fallback?.flag || "",
+        tactics: team.Tactics || fallback?.tactics || "",
+        placeholder: placeholder || fallback?.placeholder || ""
       };
+    }
+
+    function fifaPlaceholderTeam(placeholder, fallback = null) {
+      const parsed = parseFifaPlaceholder(placeholder);
+      if (!parsed) return fallback || { name: "A definir", sourceName: "A definir", flag: "", placeholder: placeholder || "" };
+      return {
+        ...(fallback || {}),
+        name: parsed.name,
+        sourceName: parsed.sourceName,
+        flag: fallback?.flag || "",
+        placeholder
+      };
+    }
+
+    function parseFifaPlaceholder(placeholder) {
+      const value = cleanText(placeholder);
+      if (!value) return null;
+      let match = value.match(/^W(\d+)$/i);
+      if (match) return { name: `Vencedor Jogo ${match[1]}`, sourceName: `Winner Match ${match[1]}`, dependency: { type: "winner", matchNumber: Number(match[1]) } };
+      match = value.match(/^L(\d+)$/i);
+      if (match) return { name: `Perdedor Jogo ${match[1]}`, sourceName: `Loser Match ${match[1]}`, dependency: { type: "loser", matchNumber: Number(match[1]) } };
+      match = value.match(/^1([A-L])$/i);
+      if (match) return { name: `1º Grupo ${match[1].toUpperCase()}`, sourceName: `Winner Group ${match[1].toUpperCase()}` };
+      match = value.match(/^2([A-L])$/i);
+      if (match) return { name: `2º Grupo ${match[1].toUpperCase()}`, sourceName: `Runner-up Group ${match[1].toUpperCase()}` };
+      match = value.match(/^3([A-L]+)$/i);
+      if (match) return { name: `3º Grupo ${match[1].toUpperCase().split("").join("/")}`, sourceName: `3rd Group ${match[1].toUpperCase().split("").join("/")}` };
+      return { name: value, sourceName: value };
+    }
+
+    function fifaDependencies(item) {
+      return uniqueDependencies([item?.PlaceHolderA, item?.PlaceHolderB]
+        .map(value => parseFifaPlaceholder(value)?.dependency)
+        .filter(Boolean));
+    }
+
+    function mergeOfficialDependencies(official, fallback) {
+      return official?.length ? uniqueDependencies([...official, ...(fallback || [])]) : (fallback || []);
+    }
+
+    function mergeTeam(previous = {}, next = {}) {
+      const previousPlaceholder = isPlaceholderTeam(previous);
+      const nextPlaceholder = isPlaceholderTeam(next);
+      if (!Object.keys(next || {}).length) return previous || { name: "A definir", flag: "" };
+      if (!previous || !Object.keys(previous).length) return next;
+      if (nextPlaceholder && !previousPlaceholder && previous.name && previous.name !== "A definir") {
+        return { ...next, ...previous, placeholder: next.placeholder || previous.placeholder || "" };
+      }
+      return {
+        ...previous,
+        ...next,
+        name: next.name && next.name !== "A definir" ? next.name : previous.name,
+        sourceName: next.sourceName && next.sourceName !== "A definir" ? next.sourceName : previous.sourceName,
+        flag: next.flag || previous.flag || "",
+        idTeam: next.idTeam || previous.idTeam || "",
+        idCountry: next.idCountry || previous.idCountry || "",
+        tactics: next.tactics || previous.tactics || "",
+        placeholder: next.placeholder || previous.placeholder || ""
+      };
+    }
+
+    function isPlaceholderTeam(team) {
+      return /A definir|Grupo|Jogo|Winner|Runner-up|Loser|Vencedor|Perdedor/i.test(`${team?.name || ""} ${team?.sourceName || ""}`);
+    }
+
+    function fifaPenaltyInfo(item, homeTeam, awayTeam) {
+      const homePens = numberOrNull(item?.HomeTeamPenaltyScore);
+      const awayPens = numberOrNull(item?.AwayTeamPenaltyScore);
+      const hasPens = homePens !== null && awayPens !== null;
+      const winnerId = String(item?.Winner || "");
+      let winner = "";
+      if (winnerId && String(homeTeam?.idTeam || "") === winnerId) winner = "home";
+      if (winnerId && String(awayTeam?.idTeam || "") === winnerId) winner = "away";
+      if (!winner && hasPens && homePens !== awayPens) winner = homePens > awayPens ? "home" : "away";
+      return {
+        score: hasPens ? `${homePens}-${awayPens}` : "",
+        winner
+      };
+    }
+
+    function fifaMatchBadge(statusInfo, hasScore, homeScore, awayScore, penaltyInfo, fallback) {
+      if (hasScore && penaltyInfo?.score) return `${homeScore}-${awayScore} pen. ${penaltyInfo.score}`;
+      if (hasScore) return `${homeScore}-${awayScore}`;
+      return statusInfo.badge || fallback;
     }
 
     function fifaGroupLetter(item) {
@@ -3354,10 +3434,35 @@
 
     function betterMatch(previous, next) {
       if (!previous) return next;
-      if (next?.dataSource === "FIFA" && previous?.dataSource !== "FIFA") return next;
-      if (next?.fifaMatchId && !previous?.fifaMatchId) return next;
-      if (next?.score && !previous?.score) return next;
-      return previous;
+      let primary = previous;
+      let fallback = next;
+      if (next?.dataSource === "FIFA" && previous?.dataSource !== "FIFA") {
+        primary = next;
+        fallback = previous;
+      } else if (next?.fifaMatchId && !previous?.fifaMatchId) {
+        primary = next;
+        fallback = previous;
+      } else if (next?.score && !previous?.score) {
+        primary = next;
+        fallback = previous;
+      }
+      return mergeMatchRecords(fallback, primary);
+    }
+
+    function mergeMatchRecords(fallback, primary) {
+      if (!fallback) return primary;
+      return {
+        ...fallback,
+        ...primary,
+        home: mergeTeam(fallback.home, primary.home),
+        away: mergeTeam(fallback.away, primary.away),
+        dependsOn: mergeOfficialDependencies(primary.dependsOn, fallback.dependsOn),
+        reportHref: primary.reportHref || fallback.reportHref || "",
+        timestamp: primary.timestamp || fallback.timestamp || 0,
+        isoDate: primary.isoDate || fallback.isoDate || "",
+        dateDisplay: primary.dateDisplay || fallback.dateDisplay || "",
+        venue: primary.venue || fallback.venue || ""
+      };
     }
 
     function rebuildTeamIndex(data) {
