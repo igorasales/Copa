@@ -2283,6 +2283,20 @@
     const LINEUP_FORMATION_CACHE_KEY = "worldcup2026-lineup-formation-v1";
     const BR_TZ = "America/Sao_Paulo";
     const GROUP_LETTERS = "ABCDEFGHIJKL".split("");
+    const GROUP_BY_MATCH_NUMBER = {
+      1: "A", 2: "A", 25: "A", 28: "A", 53: "A", 54: "A",
+      3: "B", 8: "B", 26: "B", 27: "B", 51: "B", 52: "B",
+      5: "C", 7: "C", 29: "C", 30: "C", 49: "C", 50: "C",
+      4: "D", 6: "D", 31: "D", 32: "D", 59: "D", 60: "D",
+      9: "E", 10: "E", 33: "E", 34: "E", 55: "E", 56: "E",
+      11: "F", 12: "F", 35: "F", 36: "F", 57: "F", 58: "F",
+      15: "G", 16: "G", 39: "G", 40: "G", 63: "G", 64: "G",
+      13: "H", 14: "H", 37: "H", 38: "H", 65: "H", 66: "H",
+      17: "I", 18: "I", 41: "I", 42: "I", 61: "I", 62: "I",
+      19: "J", 20: "J", 43: "J", 44: "J", 69: "J", 70: "J",
+      23: "K", 24: "K", 47: "K", 48: "K", 71: "K", 72: "K",
+      21: "L", 22: "L", 45: "L", 46: "L", 67: "L", 68: "L"
+    };
     const GROUP_IDS = GROUP_LETTERS.map(letter => `Group_${letter}`);
     const ROUND_DEFS = [
       { id: "Round_of_32", label: "Rodada de 32" },
@@ -3216,6 +3230,7 @@
         ...round,
         matches: round.matches.map(update)
       }));
+      ({ groups, knockout } = sanitizeMatchBuckets(groups, knockout));
       const knownNumbers = new Set([
         ...groups.flatMap(group => group.matches),
         ...knockout.flatMap(round => round.matches)
@@ -3233,8 +3248,9 @@
           knockout = knockout.map(round => round.id === roundId ? { ...round, matches: [...round.matches, match] } : round);
         }
       });
-      groups = groups.map(group => ({ ...group, matches: dedupeMatches(group.matches).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0)) }));
-      knockout = knockout.map(round => ({ ...round, matches: dedupeMatches(round.matches).sort((a, b) => (Number(a.matchNumber) || 0) - (Number(b.matchNumber) || 0)) }));
+      ({ groups, knockout } = sanitizeMatchBuckets(groups, knockout));
+      groups = groups.map(group => ({ ...group, matches: dedupeMatches(group.matches).filter(match => matchBelongsToGroup(match, group.letter)).sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0)) }));
+      knockout = knockout.map(round => ({ ...round, matches: dedupeMatches(round.matches).filter(match => matchBelongsToRound(match, round.id)).sort((a, b) => (Number(a.matchNumber) || 0) - (Number(b.matchNumber) || 0)) }));
       const allMatches = dedupeMatches([
         ...groups.flatMap(group => group.matches.map(match => ({ ...match, group: group.letter }))),
         ...knockout.flatMap(round => round.matches)
@@ -3399,17 +3415,51 @@
       const text = localizedDescription(item?.GroupName) || localizedDescription(item?.StageName) || "";
       const named = text.match(/(?:Grupo|Group)\s+([A-L])/i);
       if (named) return named[1].toUpperCase();
-      return number >= 1 && number <= 72 ? GROUP_LETTERS[Math.floor((number - 1) / 6)] || "" : "";
+      return groupLetterByMatchNumber(number);
+    }
+
+    function groupLetterByMatchNumber(number) {
+      return GROUP_BY_MATCH_NUMBER[Number(number)] || "";
+    }
+
+    function sanitizeMatchBuckets(groups, knockout) {
+      return {
+        groups: groups.map(group => ({
+          ...group,
+          matches: (group.matches || []).filter(match => matchBelongsToGroup(match, group.letter))
+        })),
+        knockout: knockout.map(round => ({
+          ...round,
+          matches: (round.matches || []).filter(match => matchBelongsToRound(match, round.id))
+        }))
+      };
+    }
+
+    function matchBelongsToGroup(match, letter) {
+      const number = Number(match?.matchNumber);
+      if (!number) return true;
+      if (number < 1 || number > 72) return false;
+      const expected = groupLetterByMatchNumber(number);
+      return !expected || expected === letter;
+    }
+
+    function matchBelongsToRound(match, roundId) {
+      const number = Number(match?.matchNumber);
+      if (!number) return true;
+      if (number <= 72) return false;
+      return fifaRoundId(number, match?.fifaStageId) === roundId;
     }
 
     function fifaRoundId(number, idStage = "") {
-      if (Number(idStage) === 289287 || (number >= 73 && number <= 88)) return "Round_of_32";
-      if (Number(idStage) === 289288 || (number >= 89 && number <= 96)) return "Round_of_16";
-      if (Number(idStage) === 289289 || (number >= 97 && number <= 100)) return "Quarterfinals";
-      if (Number(idStage) === 289290 || number === 101 || number === 102) return "Semifinals";
-      if (Number(idStage) === 289291 || number === 103) return "Match_for_third_place";
-      if (Number(idStage) === 289292 || number === 104) return "Final";
-      return "Round_of_32";
+      const matchNumber = Number(number);
+      const stage = Number(idStage);
+      if (stage === 289287 || (matchNumber >= 73 && matchNumber <= 88)) return "Round_of_32";
+      if (stage === 289288 || (matchNumber >= 89 && matchNumber <= 96)) return "Round_of_16";
+      if (stage === 289289 || (matchNumber >= 97 && matchNumber <= 100)) return "Quarterfinals";
+      if (stage === 289290 || matchNumber === 101 || matchNumber === 102) return "Semifinals";
+      if (stage === 289291 || matchNumber === 103) return "Match_for_third_place";
+      if (stage === 289292 || matchNumber === 104) return "Final";
+      return "";
     }
 
     function fifaStageLabel(number, idStage, stageName) {
