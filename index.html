@@ -1676,12 +1676,17 @@
 
     .substitution-picker {
       border: 1px solid var(--line);
-      border-radius: var(--radius);
+      border-radius: 8px;
       background: #fff;
       box-shadow: var(--shadow);
-      padding: 10px;
+      padding: 8px;
       display: grid;
       gap: 8px;
+      position: fixed;
+      z-index: 80;
+      width: min(310px, calc(100vw - 24px));
+      max-height: min(390px, calc(100vh - 24px));
+      overflow: hidden;
     }
 
     .substitution-picker[hidden] {
@@ -1702,7 +1707,7 @@
     .substitution-list {
       display: grid;
       gap: 6px;
-      max-height: 220px;
+      max-height: 286px;
       overflow: auto;
     }
 
@@ -1716,6 +1721,20 @@
       gap: 8px;
       align-items: center;
       text-align: left;
+      cursor: pointer;
+    }
+
+    .substitution-option:hover,
+    .substitution-option:focus-visible {
+      border-color: var(--blue);
+      background: #f4f8ff;
+      outline: none;
+    }
+
+    .substitution-option em {
+      color: var(--ink);
+      font-style: normal;
+      font-weight: 800;
     }
 
     .substitution-option span {
@@ -5718,7 +5737,7 @@
                 ${lineup.map((player, index) => playerDot(player, index, teamId)).join("")}
               </div>
             </div>
-            <p class="detail-label">Clique em uma vaga no campo, depois clique em Escalar no banco. Arrastar muda a função no campo e recalcula a projeção.</p>
+            <p class="detail-label">Arraste para reposicionar. Duplo clique no jogador abre a lista de substituição.</p>
             <div class="substitution-picker" id="substitutionPicker" hidden></div>
             <button class="ghost-button" type="button" data-reset-lineup="${escapeAttr(teamId)}">Restaurar provavel</button>
           </div>
@@ -5870,7 +5889,7 @@
       renderTeamModal(modal.team, modal.squad);
     }
 
-    function openSubstitutionPicker(teamId, slot, currentPlayerId) {
+    function openSubstitutionPicker(teamId, slot, currentPlayerId, anchor = null) {
       const box = document.getElementById("substitutionPicker");
       const modal = state.currentModal;
       const players = Array.isArray(modal?.squad?.Players) ? modal.squad.Players : [];
@@ -5878,28 +5897,54 @@
       const lineup = lineupForTeam(players, teamId);
       const lineupIds = new Set(lineup.map(player => String(player.IdPlayer)));
       const current = players.find(player => String(player.IdPlayer) === String(currentPlayerId));
+      const currentRole = current ? positionRole(current) : "";
       const reserves = players
         .filter(player => !lineupIds.has(String(player.IdPlayer)))
-        .sort((a, b) => playerAttributes(b).overall - playerAttributes(a).overall)
-        .slice(0, 18);
-      box.hidden = false;
+        .sort((a, b) => {
+          const roleBoost = (positionRole(b) === currentRole ? 8 : 0) - (positionRole(a) === currentRole ? 8 : 0);
+          return roleBoost || playerAttributes(b).overall - playerAttributes(a).overall || playerFullName(a).localeCompare(playerFullName(b));
+        })
+        .slice(0, 24);
       box.innerHTML = `
         <div class="substitution-picker-head">
           <strong>Substituir ${escapeHtml(current ? playerShortName(current) : `vaga ${Number(slot) + 1}`)}</strong>
           <button class="ghost-button" type="button" data-close-substitution>Fechar</button>
         </div>
-        <div class="substitution-list">
+        <div class="substitution-list" role="listbox" aria-label="Jogadores disponiveis para substituicao">
           ${reserves.length ? reserves.map(player => {
             const attrs = playerAttributes(player);
+            const sameRole = currentRole && positionRole(player) === currentRole;
             return `
-              <button class="substitution-option" type="button" data-sub-player="${escapeAttr(player.IdPlayer || "")}" data-sub-team="${escapeAttr(teamId)}" data-sub-slot="${escapeAttr(slot)}">
-                <span><strong>${escapeHtml(playerShortName(player))}</strong><br>${escapeHtml(playerPosition(player))} - GER ${attrs.overall} - MOR ${attrs.moral}</span>
+              <button class="substitution-option" type="button" role="option" data-sub-player="${escapeAttr(player.IdPlayer || "")}" data-sub-team="${escapeAttr(teamId)}" data-sub-slot="${escapeAttr(slot)}">
+                <span><em>${escapeHtml(playerFullName(player))}</em><br>${escapeHtml(playerPosition(player))} - GER ${attrs.overall} - MOR ${attrs.moral}${sameRole ? " - mesma funcao" : ""}</span>
                 <strong>Entrar</strong>
               </button>
             `;
           }).join("") : `<div class="empty">Sem reservas disponiveis.</div>`}
         </div>
       `;
+      box.hidden = false;
+      positionSubstitutionPicker(box, anchor);
+      box.querySelector("[data-sub-player]")?.focus({ preventScroll: true });
+    }
+
+    function positionSubstitutionPicker(box, anchor = null) {
+      const rect = anchor?.getBoundingClientRect?.();
+      const width = Math.min(310, Math.max(240, window.innerWidth - 24));
+      box.style.width = `${width}px`;
+      box.style.visibility = "hidden";
+      box.hidden = false;
+      const boxRect = box.getBoundingClientRect();
+      const preferredLeft = rect ? rect.left + (rect.width / 2) - (width / 2) : (window.innerWidth / 2) - (width / 2);
+      const preferredTop = rect ? rect.bottom + 8 : 96;
+      let left = Math.max(12, Math.min(window.innerWidth - width - 12, preferredLeft));
+      let top = Math.max(12, preferredTop);
+      if (top + boxRect.height > window.innerHeight - 12 && rect) {
+        top = Math.max(12, rect.top - boxRect.height - 8);
+      }
+      box.style.left = `${Math.round(left)}px`;
+      box.style.top = `${Math.round(top)}px`;
+      box.style.visibility = "visible";
     }
 
     function playerDot(player, index, teamId = "") {
@@ -6094,6 +6139,10 @@
         if (box) box.hidden = true;
         return;
       }
+      const openSubstitution = document.getElementById("substitutionPicker");
+      if (openSubstitution && !openSubstitution.hidden && !event.target.closest("#substitutionPicker") && !event.target.closest("[data-lineup-player]")) {
+        openSubstitution.hidden = true;
+      }
       const resetLineup = event.target.closest("[data-reset-lineup]");
       if (resetLineup) {
         const teamId = resetLineup.getAttribute("data-reset-lineup");
@@ -6154,7 +6203,8 @@
       openSubstitutionPicker(
         pitch?.getAttribute("data-lineup-team") || "",
         Number(dot.getAttribute("data-lineup-slot")) || 0,
-        dot.getAttribute("data-lineup-player")
+        dot.getAttribute("data-lineup-player"),
+        dot
       );
     });
 
